@@ -8,8 +8,17 @@
     "start": "next start"
   },
   "dependencies": {
+    "@material-ui/core": "^4.12.1",
+    "@material-ui/icons": "^4.11.2",
+    "@prisma/client": "^2.26.0",
+    "axios": "^0.21.1",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^1.1.1",
+    "jsonwebtoken": "^8.5.1",
     "next": "10.x",
+    "next-auth": "^3.27.3",
     "react": "17.x",
-    "react-dom": "17.x"
+    "react-dom": "17.x",
+    "react-swipeable-views": "^0.14.0"
   }
 }
