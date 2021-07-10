@@ -1,7 +1,7 @@
 import '../styles/globals.css'
 
 import React, { useEffect, useState } from 'react'
-import { ServerStyleSheets, ThemeProvider } from '@material-ui/core/styles'
+import { ThemeProvider } from '@material-ui/core'
 
 import { 
   BottomNavigation, BottomNavigationAction, Typography, Box
@@ -18,26 +18,24 @@ import theme from '../styles/theme'
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter()
-  const sheets = new ServerStyleSheets()
+  //const sheets = new ServerStyleSheets()
 
-  return sheets.collect(
+  return (
     <ThemeProvider theme={theme}>
-      <Box component="span" m={1}>
-        <Component {...pageProps} />
+      <Component {...pageProps} />
 
-        <BottomNavigation
-            style={{ width: '100%', position: 'fixed', bottom: 0 }}
-            value={router.pathname.split('/')[1]}
-            onChange={(event, newValue) => {
-              router.push(`/${newValue}`);
-            }}
-            showLabels
-          >
-            <BottomNavigationAction label="Escala" value="schedule" icon={<ViewDayIcon />} />
-            <BottomNavigationAction label="Louvores" value="praises" icon={<LibraryMusicIcon />} />
-            <BottomNavigationAction label="Membro" value="member" icon={<PersonIcon />} />
-          </BottomNavigation>
-      </Box>
+      <BottomNavigation
+        style={{ width: '100%', position: 'fixed', bottom: 0 }}
+        value={router.pathname.split('/')[1]}
+        onChange={(event, newValue) => {
+          router.push(`/${newValue}`);
+        }}
+        showLabels
+      >
+        <BottomNavigationAction label="Escala" value="schedule" icon={<ViewDayIcon />} />
+        <BottomNavigationAction label="Louvores" value="praises" icon={<LibraryMusicIcon />} />
+        <BottomNavigationAction label="Membro" value="member" icon={<PersonIcon />} />
+      </BottomNavigation>
     </ThemeProvider>
   )
 }

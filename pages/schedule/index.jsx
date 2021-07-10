@@ -39,7 +39,7 @@ export default function SchedulePage() {
       </TabPanel>
 
       <TabPanel value={tab} index={1}>
-        
+        <Typography>Item Two tr</Typography>
       </TabPanel>
       
       <TabPanel value={tab} index={2}>
