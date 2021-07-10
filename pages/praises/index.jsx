@@ -237,6 +237,7 @@ export default function PraisesPage() {
 
                 { item.tags.map(tag => (
                   <Chip
+                    key={tag}
                     // avatar={<Avatar>{item.tone}</Avatar>}
                     className={classes.tag}
                     size="small"
