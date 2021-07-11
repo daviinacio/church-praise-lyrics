@@ -29,7 +29,7 @@ export default function SEO({ title, description, children }){
       {/* <link rel="dns-prefetch" href="//fonts.gstatic.com" /> */}
       {/* <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" /> */}
 
-      <meta name="theme-color" content="#ab5803" />
+      {/* <meta name="theme-color" content="#ab5803" /> */}
 
       {children}
     </Head>

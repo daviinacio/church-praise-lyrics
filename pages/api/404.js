@@ -1,4 +1,4 @@
-import { RouteNotFoundError } from "../../utils/errors";
+import { RouteNotFoundError } from "../../src/errors";
 
 const RouteNotFound = async (req, res) => {
   return res.status(404).json({

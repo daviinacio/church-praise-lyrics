@@ -1,7 +1,7 @@
 import '../styles/globals.css'
 
 import React, { useEffect, useState } from 'react'
-import { ThemeProvider } from '@material-ui/core'
+import { CssBaseline, ThemeProvider } from '@material-ui/core'
 
 import { 
   BottomNavigation, BottomNavigationAction, Typography, Box
@@ -14,14 +14,22 @@ import {
 } from '@material-ui/icons'
 
 import { useRouter } from 'next/router'
-import theme from '../styles/theme'
+import theme from '../src/theme'
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter()
-  //const sheets = new ServerStyleSheets()
+
+  React.useEffect(() => {
+    // Remove the server-side injected CSS.
+    const jssStyles = document.querySelector('#jss-server-side');
+    if (jssStyles) {
+      jssStyles.parentElement.removeChild(jssStyles);
+    }
+  }, [])
 
   return (
     <ThemeProvider theme={theme}>
+      <CssBaseline />
       <Component {...pageProps} />
 
       <BottomNavigation
