@@ -1,2 +1,2 @@
-import EditPraisePage from "./[praise_id]/edit"
+import EditPraisePage from "./[praiseId]/edit"
 export default EditPraisePage

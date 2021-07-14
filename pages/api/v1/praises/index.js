@@ -16,7 +16,7 @@ export const index = async (req, res) => {
 
   const praises = []
 
-  for (var i = 0; i < 2; i++){
+  for (var i = 0; i < 4; i++){
     praises.push({
       id: "a08fa75f-0c64-46d7-be49-6e63b631e19" + i,
       name: `Projeto no Deserto (0${i})`,
@@ -86,9 +86,7 @@ export const index = async (req, res) => {
     })
   }
 
-  // Fake ping mock
-  if(process.env.NODE_ENV === 'development')
-    await sleep(200)
+  
 
   if(praiseId){console.log(34)
     const praise = praises.filter(praise => praise.id == praiseId)
