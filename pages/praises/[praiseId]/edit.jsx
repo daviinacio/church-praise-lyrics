@@ -7,7 +7,7 @@ import {
 
 export default function EditPraisePage() {
   const router = useRouter()
-  const praiseId = router.query.praise_id
+  const praiseId = router.query.praiseId
 
   const pageTitle = praiseId ? "Editar louvor" : "Novo louvor"
 

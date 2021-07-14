@@ -1,32 +1,20 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import SwipeableViews from 'react-swipeable-views'
 import { makeStyles } from '@material-ui/core/styles'
 import SEO from '../../components/SEO'
 import TabPanel, { a11yProps } from '../../components/TabPanel'
 import axios from 'axios'
-import clsx from 'clsx'
-import Link from 'next/link'
 
 import {
   AppBar,
   Avatar,
   Backdrop,
-  Box,
-  Button,
   Card,
-  CardActionArea,
-  CardActions,
-  CardContent,
   CardHeader,
-  Chip,
   CircularProgress,
-  Collapse,
-  Container,
-  Grid,
   IconButton,
   Menu,
   MenuItem,
-  Paper,
   Tab,
   Tabs,
   Toolbar,
@@ -37,6 +25,7 @@ import {
   MoreVert as MoreVertIcon,
   ExpandMore as ExpandMoreIcon
 } from '@material-ui/icons'
+import { useRouter } from 'next/router'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -78,7 +67,8 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 export default function PraisesPage() {
-  const classes = useStyles();
+  const classes = useStyles()
+  const router = useRouter()
 
   // Tabs
   const [tab, setTab] = useState(0)
@@ -94,7 +84,7 @@ export default function PraisesPage() {
 
   // Float menu on list
   const [anchorEl, setAnchorEl] = useState(null)
-  const [anchorData, setAnchorData] = useState(null)
+  const [anchorData, setAnchorData] = useState({ id: '' })
 
   function handleInflateMenu(event, data){
     setAnchorEl(event.currentTarget)
@@ -103,7 +93,7 @@ export default function PraisesPage() {
 
   function handleCloseMenu(){
     setAnchorEl(null)
-    setAnchorData(null)
+    setAnchorData({ id: '' })
   }
 
   function handleChangePraiseStatus(praiseId, newStatus){
@@ -118,6 +108,10 @@ export default function PraisesPage() {
     }))
 
     handleCloseMenu()
+  }
+
+  function handleEditPraise(praiseId){
+    router.push(`/praises/${praiseId}/edit`)
   }
 
   function handleRemovePraise(praiseId){
@@ -313,18 +307,16 @@ export default function PraisesPage() {
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}>
 
-        { (anchorData || {}).status === 'suggestion' && (
+        { anchorData.status === 'suggestion' && (
           <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'training')}>Ensaiar</MenuItem>
         )}
 
-        { (anchorData || {}).status === 'training' && (
+        { anchorData.status === 'training' && (
           <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'approved')}>Aprovar</MenuItem>
         )}
 
-        <MenuItem>
-          <Link href={`/praises/${(anchorData || {}).id}/edit`}>Editar</Link>
-        </MenuItem>
-
+        <MenuItem onClick={() => handleEditPraise(anchorData.id)}>Editar</MenuItem>
+        
         <MenuItem onClick={() => { handleRemovePraise(anchorData.id) }}>Remover</MenuItem>
       </Menu>
       
