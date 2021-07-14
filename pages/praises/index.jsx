@@ -5,8 +5,10 @@ import SEO from '../../components/SEO'
 import TabPanel, { a11yProps } from '../../components/TabPanel'
 import axios from 'axios'
 import clsx from 'clsx'
+import Link from 'next/link'
 
-import { AppBar,
+import {
+  AppBar,
   Avatar,
   Backdrop,
   Box,
@@ -24,6 +26,7 @@ import { AppBar,
   IconButton,
   Menu,
   MenuItem,
+  Paper,
   Tab,
   Tabs,
   Toolbar,
@@ -41,9 +44,12 @@ const useStyles = makeStyles((theme) => ({
     // maxWidth: 500,
     // margin: 'auto'
   },
-
+  content: {
+    marginTop: 104,
+    minHeight: '-webkit-fill-available'
+  },
   card: {
-    marginBottom: '15px'
+    marginBottom: '7.5px'
   },
   tag: {
     marginRight: '10px'
@@ -63,29 +69,70 @@ const useStyles = makeStyles((theme) => ({
   },
   expandOpen: {
     transform: 'rotate(180deg)',
+  },
+  backdrop: {
+    backgroundColor: 'rgba(250, 250, 250, 0.5)',
+    zIndex: 1,
+    transition: 'opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important'
   }
 }))
 
 export default function PraisesPage() {
   const classes = useStyles();
 
+  // Tabs
   const [tab, setTab] = useState(0)
-  const [praises, setPraises] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [expanded, setExpanded] = useState(false)
-  const [anchorEl, setAnchorEl] = useState(null)
 
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  }
+  useEffect(() => {
+    setTab(parseInt(sessionStorage.getItem('praises.tab')) || 0)
+  }, [])
 
   function handleChangeTab(event, newTab){
     setTab(newTab)
+    sessionStorage.setItem('praises.tab', newTab)
   }
 
-  const handleChangeIndex = (index) => {
-    setTab(index);
+  // Float menu on list
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [anchorData, setAnchorData] = useState(null)
+
+  function handleInflateMenu(event, data){
+    setAnchorEl(event.currentTarget)
+    setAnchorData(data)
   }
+
+  function handleCloseMenu(){
+    setAnchorEl(null)
+    setAnchorData(null)
+  }
+
+  function handleChangePraiseStatus(praiseId, newStatus){
+    axios.put(`/api/v1/praises/${praiseId}`, {
+      status: newStatus
+    })
+
+    setPraises(praises.map(praise => {
+      if(praise.id === praiseId)
+        praise.status = newStatus
+      return praise
+    }))
+
+    handleCloseMenu()
+  }
+
+  function handleRemovePraise(praiseId){
+    axios.delete(`/api/v1/praises/${praiseId}`)
+    
+    setPraises(praises.filter(praise => {
+      return praise.id !== praiseId
+    }))
+
+    handleCloseMenu()
+  }
+
+  // Content data
+  const [praises, setPraises] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(async () => {
     const { data } = await axios.get('/api/v1/praises')
@@ -93,11 +140,11 @@ export default function PraisesPage() {
     setPraises(data)
     setIsLoading(false)
   }, [])
-  
+
   return (
     <>
       <SEO title="Louvores" />
-      <AppBar position="sticky">
+      <AppBar>
         <Toolbar className={classes.root}>
           <Typography variant="h6">
             Banco de louvor
@@ -115,32 +162,33 @@ export default function PraisesPage() {
           <Tab label="Sugestões" {...a11yProps(2)} />
         </Tabs>
       </AppBar>
-      
+
       <SwipeableViews
         axis={'x'}
         index={tab}
-        onChangeIndex={handleChangeIndex}>
-
-          {/* { ['approved', 'training', 'suggestion'].map((tabId, index) => (
-            <TabPanel value={tab} index={index}>
+        className={classes.content}
+        onChangeIndex={(index) => handleChangeTab(undefined, index)}>
+          
+          { ['approved', 'training', 'suggestion'].map((tabId, index) => (
+            <TabPanel value={tab} index={index} showAll={false} key={tabId}>
               { praises.filter(item => item.status === tabId).map((item) => (
-                <Card variant="outlined">
-                  <CardContent>
-                    
-                  </CardContent>
+                <Card variant="outlined" key={item.id} className={classes.card}>
                   <CardHeader
                     avatar={
-                      <Avatar aria-label="recipe">
-                        R
+                      <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
+                        { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
                       </Avatar>
                     }
                     action={
-                      <IconButton aria-label="settings">
+                      <IconButton
+                        aria-label="settings"
+                        onClick={(event) => { handleInflateMenu(event, item) }}>
                         <MoreVertIcon />
                       </IconButton>
+                      
                     }
-                    title="Shrimp and Chorizo Paella"
-                    subheader="September 14, 2016"
+                    title={item.name}
+                    subheader={item.artist}
                   />
                 </Card>
               )) }
@@ -155,9 +203,9 @@ export default function PraisesPage() {
                 </Typography>
               ) }
             </TabPanel>
-          )) } */}
+          )) }
 
-        <TabPanel value={tab} index={0}>
+        {/* <TabPanel value={tab} index={0}>
           { praises.filter(item => item.status === 'approved').map((item) => (
             <Typography key={item.id}>Item: {item.name}</Typography>
           )) }
@@ -254,7 +302,7 @@ export default function PraisesPage() {
               Nenhuma sugestão encontrada
             </Typography>
           ) }
-        </TabPanel>
+        </TabPanel> */}
 
       </SwipeableViews>
 
@@ -263,16 +311,25 @@ export default function PraisesPage() {
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
-        onClose={() => {
-          setAnchorEl(null);
-        }}>
-        <MenuItem>Profile</MenuItem>
-        <MenuItem>My account</MenuItem>
-        <MenuItem>Logout</MenuItem>
+        onClose={handleCloseMenu}>
+
+        { (anchorData || {}).status === 'suggestion' && (
+          <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'training')}>Ensaiar</MenuItem>
+        )}
+
+        { (anchorData || {}).status === 'training' && (
+          <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'approved')}>Aprovar</MenuItem>
+        )}
+
+        <MenuItem>
+          <Link href={`/praises/${(anchorData || {}).id}/edit`}>Editar</Link>
+        </MenuItem>
+
+        <MenuItem onClick={() => { handleRemovePraise(anchorData.id) }}>Remover</MenuItem>
       </Menu>
       
-      <Backdrop open={isLoading}>
-        <CircularProgress color={"secondary"} />
+      <Backdrop open={isLoading} className={classes.backdrop}>
+        <CircularProgress color={"primary"} />
       </Backdrop>
     </>
   )

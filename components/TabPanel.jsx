@@ -1,18 +1,18 @@
 import { Box, Container, Typography } from "@material-ui/core";
 
 export default function TabPanel(props) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, showAll = false, ...other } = props;
 
   return (
     <div
       role="tabpanel"
-      hidden={value !== index}
+      hidden={value !== index && !showAll}
       id={`scrollable-auto-tabpanel-${index}`}
       aria-labelledby={`scrollable-auto-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Container style={{ paddingTop: '16px', paddingBottom: '56px' }}>
+      { (value === index || showAll) && (
+        <Container style={{ paddingTop: '12px', paddingBottom: '60px' }}>
           {children}
         </Container>
         
