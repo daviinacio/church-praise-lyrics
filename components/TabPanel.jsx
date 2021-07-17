@@ -12,7 +12,7 @@ export default function TabPanel(props) {
       {...other}
     >
       { (value === index || showAll) && (
-        <Container style={{ paddingTop: '12px', paddingBottom: '60px' }}>
+        <Container style={{ paddingTop: 6, paddingBottom: 6 }}>
           {children}
         </Container>
         

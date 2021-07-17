@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import SwipeableViews from 'react-swipeable-views'
-import { makeStyles } from '@material-ui/core/styles'
 import SEO from '../../components/SEO'
 import TabPanel, { a11yProps } from '../../components/TabPanel'
+import { makeStyles } from '@material-ui/core/styles'
 import axios from 'axios'
 
 import {
   AppBar,
   Avatar,
   Backdrop,
+  Button,
   Card,
   CardHeader,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Fab,
   IconButton,
   Menu,
   MenuItem,
@@ -23,46 +30,48 @@ import {
 
 import {
   MoreVert as MoreVertIcon,
-  ExpandMore as ExpandMoreIcon
+  ExpandMore as ExpandMoreIcon,
+  Add as AddIcon
 } from '@material-ui/icons'
-import { useRouter } from 'next/router'
+
+import {EditPraiseDialog} from './[praiseId]/edit'
+
+const editWithDialog = true
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    // flexGrow: 1,
-    // maxWidth: 500,
-    // margin: 'auto'
-  },
   content: {
-    marginTop: 104,
+    paddingTop: 104,
+    paddingBottom: 56,
     minHeight: '-webkit-fill-available'
   },
+  fab: {
+    position: 'fixed',
+    bottom: 56 + theme.spacing(2),
+    right: theme.spacing(2),
+  },
   card: {
-    marginBottom: '7.5px'
-  },
-  tag: {
-    marginRight: '10px'
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '250px'
+    marginTop: 8,
+    marginBottom: 8
   },
   expand: {
     transform: 'rotate(0deg)',
     marginLeft: 'auto',
     transition: theme.transitions.create('transform', {
-      duration: theme.transitions.duration.shortest,
+      duration: theme.transitions.duration.shortest
     }),
   },
   expandOpen: {
-    transform: 'rotate(180deg)',
+    transform: 'rotate(180deg)'
   },
-  backdrop: {
-    backgroundColor: 'rgba(250, 250, 250, 0.5)',
-    zIndex: 1,
-    transition: 'opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important'
+  tone: {
+    backgroundColor: theme.palette.primary.dark
+  },
+  form: {
+    '& .MuiTextField-root': {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      width: '100%',
+    }
   }
 }))
 
@@ -86,18 +95,15 @@ export default function PraisesPage() {
   const [anchorEl, setAnchorEl] = useState(null)
   const [anchorData, setAnchorData] = useState({ id: '' })
 
-  function handleInflateMenu(event, data){
-    setAnchorEl(event.currentTarget)
+  function handleMenuInflate(event, data){
     setAnchorData(data)
+    setAnchorEl(event.currentTarget)
   }
 
-  function handleCloseMenu(){
-    setAnchorEl(null)
-    setAnchorData({ id: '' })
-  }
+  async function handleMenuChangeStatus(praiseId, newStatus){
+    handleMenuClose()
 
-  function handleChangePraiseStatus(praiseId, newStatus){
-    axios.put(`/api/v1/praises/${praiseId}`, {
+    await axios.put(`/api/v1/praises/${praiseId}`, {
       status: newStatus
     })
 
@@ -106,22 +112,58 @@ export default function PraisesPage() {
         praise.status = newStatus
       return praise
     }))
-
-    handleCloseMenu()
   }
 
-  function handleEditPraise(praiseId){
-    router.push(`/praises/${praiseId}/edit`)
+  function handleMenuEdit(data){
+    if(editWithDialog){
+      handleDialogEditorInflate(data)
+      handleMenuClose()
+    }
+    else
+      router.push(`/praises/${data.id}/edit`)
   }
 
-  function handleRemovePraise(praiseId){
-    axios.delete(`/api/v1/praises/${praiseId}`)
+  async function handleMenuRemove(praiseId){
+    handleMenuClose()
+
+    await axios.delete(`/api/v1/praises/${praiseId}`)
     
     setPraises(praises.filter(praise => {
       return praise.id !== praiseId
     }))
+  }
 
-    handleCloseMenu()
+  function handleMenuClose(){
+    setAnchorEl(null)
+    setTimeout(() => setAnchorData({ id: '' }), 250)
+  }
+
+  // Dialog Editor
+  const [dialogEditorOpen, setDialogEditorOpen] = useState(false)
+  const [dialogEditorData, setDialogEditorData] = useState({})
+
+  function handleDialogEditorInflate(data){
+    setDialogEditorData(data)
+    setDialogEditorOpen(true)
+  }
+
+  function handleDialogEditorSave(data){
+    handleDialogEditorClose()
+    
+    if(data.id){
+      setPraises(praises.map(praise => {
+        if(praise.id === data.id)
+          praise = data
+        return praise
+      }))
+    }
+    else {
+      setPraises([...praises, data])
+    }
+  }
+
+  function handleDialogEditorClose(){
+    setDialogEditorOpen(false)
   }
 
   // Content data
@@ -139,7 +181,7 @@ export default function PraisesPage() {
     <>
       <SEO title="Louvores" />
       <AppBar>
-        <Toolbar className={classes.root}>
+        <Toolbar>
           <Typography variant="h6">
             Banco de louvor
           </Typography>
@@ -149,8 +191,7 @@ export default function PraisesPage() {
           onChange={handleChangeTab}
           variant="fullWidth"
           scrollButtons="auto"
-          aria-label="simple tabs example"
-          className={classes.root}>
+          aria-label="simple tabs example">
           <Tab label="Aprovados" {...a11yProps(0)} />
           <Tab label="Ensaiando" {...a11yProps(1)} />
           <Tab label="Sugestões" {...a11yProps(2)} />
@@ -168,15 +209,18 @@ export default function PraisesPage() {
               { praises.filter(item => item.status === tabId).map((item) => (
                 <Card variant="outlined" key={item.id} className={classes.card}>
                   <CardHeader
-                    avatar={
-                      <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
-                        { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
-                      </Avatar>
-                    }
+                  avatar={
+                    <Avatar alt={item.tone} className={classes.tone}>{ item.tone }</Avatar>
+                  }
+                    // avatar={
+                    //   <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
+                    //     { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
+                    //   </Avatar>
+                    // }
                     action={
                       <IconButton
                         aria-label="settings"
-                        onClick={(event) => { handleInflateMenu(event, item) }}>
+                        onClick={(event) => { handleMenuInflate(event, item) }}>
                         <MoreVertIcon />
                       </IconButton>
                       
@@ -300,27 +344,63 @@ export default function PraisesPage() {
 
       </SwipeableViews>
 
+      <EditPraiseDialog
+        open={dialogEditorOpen}
+        initialValue={dialogEditorData}
+        onClose={handleDialogEditorClose}
+        onSave={handleDialogEditorSave}
+      />
+
+      {/* <Dialog onClose={handleDialogEditorClose} aria-labelledby="simple-dialog-title" open={dialogEditorOpen}>
+        <DialogTitle id="simple-dialog-title">
+          { (dialogEditorData.id ? 'Editar' : 'Novo') + ' louvor' }
+        </DialogTitle>
+
+        <form onSubmit={handleDialogEditorSave} className={classes.form}>
+          <DialogContent>
+            <EditPraiseFields value={dialogEditorData} onChange={(p) => setDialogEditorData(p)} />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogEditorClose}>Cancelar</Button>
+            <Button onClick={() => handleDialogEditorSave(dialogEditorData)} color="primary">Salvar</Button>
+          </DialogActions>
+        </form>
+      </Dialog> */}
+
+      <Fab
+        color="primary"
+        aria-label="add"
+        className={classes.fab}
+        onClick={() => {
+          if(editWithDialog)
+            handleDialogEditorInflate({})
+          else
+            router.push('/praises/new')
+        }}>
+        <AddIcon />
+      </Fab>
+
       <Menu
         id="simple-menu"
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}>
+        onClose={handleMenuClose}>
 
         { anchorData.status === 'suggestion' && (
-          <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'training')}>Ensaiar</MenuItem>
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, 'training')}>Ensaiar</MenuItem>
         )}
 
         { anchorData.status === 'training' && (
-          <MenuItem onClick={() => handleChangePraiseStatus(anchorData.id, 'approved')}>Aprovar</MenuItem>
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, 'approved')}>Aprovar</MenuItem>
         )}
 
-        <MenuItem onClick={() => handleEditPraise(anchorData.id)}>Editar</MenuItem>
+        <MenuItem onClick={() => handleMenuEdit(anchorData)}>Editar</MenuItem>
         
-        <MenuItem onClick={() => { handleRemovePraise(anchorData.id) }}>Remover</MenuItem>
+        <MenuItem onClick={() => { handleMenuRemove(anchorData.id) }}>Remover</MenuItem>
       </Menu>
       
-      <Backdrop open={isLoading} className={classes.backdrop}>
+      <Backdrop variant="loading" open={isLoading}>
         <CircularProgress color={"primary"} />
       </Backdrop>
     </>

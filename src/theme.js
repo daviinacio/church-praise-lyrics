@@ -16,7 +16,44 @@ const theme = createTheme({
       contrastText: '#000',
     },
   },
-  direction: 'rtl'
+  direction: 'rtl',
+  overrides: {
+    'MuiDialogActions': {
+      root: {
+        padding: '8px 16px',
+
+        '& .MuiButton-label': {
+          fontWeight: 600
+        }
+      }
+    }
+  }
+
+  // components: {
+  //   // Name of the component
+  //   MuiBackdrop: {
+  //     variants: [
+  //       {
+  //         props: { variant: 'loading' },
+  //         style: {
+  //           backgroundColor: 'rgba(250, 250, 250, 0.5)',
+  //           zIndex: 1,  
+  //           transition: 'opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important'
+  //         }
+  //       }
+  //     ]
+  //   }
+  // }
+
+  // overrides: {
+  //   MuiBackdrop: {
+  //     '@loading': {
+  //       backgroundColor: 'rgba(250, 250, 250, 0.5)',
+  //       zIndex: 1,
+  //       transition: 'opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important'
+  //     }
+  //   }
+  // }
 });
 
 export default theme;

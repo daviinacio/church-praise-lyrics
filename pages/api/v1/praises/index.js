@@ -1,5 +1,5 @@
 import RouteNotFound from "../../404";
-import { sleep } from "../../../../src/dev";
+import { sleep, uuid } from "../../../../src/dev";
 
 const handler = async (req, res) => {
   switch(req.method.trim().toUpperCase()){
@@ -16,13 +16,13 @@ export const index = async (req, res) => {
 
   const praises = []
 
-  for (var i = 0; i < 4; i++){
+  for (var i = 0; i < 2; i++){
     praises.push({
       id: "a08fa75f-0c64-46d7-be49-6e63b631e19" + i,
       name: `Projeto no Deserto (0${i})`,
       artist: "Voz da Verdade",
       tags: [
-        "adoração", "oferta"
+        "adoração", "oferta", "apelo"
       ],
       status: 'approved',
       tone: 'C',
@@ -42,7 +42,7 @@ export const index = async (req, res) => {
         "adoração", "oferta"
       ],
       status: 'training',
-      tone: 'C',
+      tone: 'C#',
       transpose: 0,
       created_by: {
         name: "Davi Inácio",
@@ -59,7 +59,7 @@ export const index = async (req, res) => {
         "adoração", "oferta"
       ],
       status: 'suggestion',
-      tone: 'C',
+      tone: 'Bb',
       transpose: 0,
       created_by: {
         name: "Davi Inácio",
@@ -76,7 +76,7 @@ export const index = async (req, res) => {
         "adoração", "oferta"
       ],
       status: 'suggestion',
-      tone: 'C',
+      tone: 'Cm',
       transpose: 0,
       created_by: {
         name: "Davi Inácio Ciconelli Vieira",
@@ -86,9 +86,11 @@ export const index = async (req, res) => {
     })
   }
 
-  
+  // Fake ping mock
+  //if(process.env.NODE_ENV === 'development')
+  //  await sleep(1000)
 
-  if(praiseId){console.log(34)
+  if(praiseId){
     const praise = praises.filter(praise => praise.id == praiseId)
 
     if(praise.length > 0)
@@ -102,17 +104,42 @@ export const index = async (req, res) => {
 }
 
 export const store = async (req, res) => {
-  console.log('praise.store')
-  return res.status(200).json({
-    message: "praise.store"
-  })
+  const praise = {
+    ...{
+      status: 'suggestion',
+      name: 'Teste',
+      artist: 'Teste',
+      created_by: {
+        "name": "Davi Inácio"
+      }
+    },
+    ...req.body,
+    id: uuid()
+  }
+
+  // Fake ping mock
+  //if(process.env.NODE_ENV === 'development')
+  //  await sleep(1000)
+
+  console.log('praise.store: ', praise)
+  return res.status(200).json(praise)
 }
 
 export const update = async (req, res) => {
   const { praiseId } = req.query
-  const { status } = req.body
+  const { status, name } = req.body
 
-  console.log(`praise.update ${praiseId}: status -> ${status}`)
+  if(name){
+    console.log(`praise.update ${praiseId}: `, req.body)
+  }
+  else {
+    console.log(`praise.update ${praiseId}: status -> ${status}`)
+  }
+
+  // Fake ping mock
+  //if(process.env.NODE_ENV === 'development')
+  //  await sleep(1000)
+
   return res.status(200).json({
     message: "praise.update"
   })
@@ -122,7 +149,12 @@ export const destroy = async (req, res) => {
   const { praiseId } = req.query
 
   console.log(`praise.destroy ${praiseId}`)
-  return res.status(200).json({
+
+  // Fake ping mock
+  //if(process.env.NODE_ENV === 'development')
+  //  await sleep(1000)
+
+  return res.status(204).json({
     message: "praise.destroy"
   })
 }
