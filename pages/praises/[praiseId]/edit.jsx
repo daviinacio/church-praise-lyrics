@@ -146,7 +146,7 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
         onSave(praise)
     }
     else {
-      const response = await axios.post(`/api/v1/praises`, data)
+      const response = await axios.post(`/api/v1/praises`, praise)
 
       if(typeof onSave === 'function')
         onSave(response.data)
@@ -172,7 +172,7 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   )
 }
 
-export function EditPraiseFields({ value, onChange }) {
+function EditPraiseFields({ value, onChange }) {
   const classes = useStyles()
   
   const praiseTags = [

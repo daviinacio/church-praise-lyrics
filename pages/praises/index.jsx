@@ -149,8 +149,8 @@ export default function PraisesPage() {
 
   function handleDialogEditorSave(data){
     handleDialogEditorClose()
-    
-    if(data.id){
+
+    if(praises.some(e => e.id === data.id)){
       setPraises(praises.map(praise => {
         if(praise.id === data.id)
           praise = data
