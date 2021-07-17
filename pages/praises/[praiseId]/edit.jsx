@@ -20,7 +20,8 @@ import {
   DialogActions,
   InputLabel,
   MenuItem,
-  Select
+  Select,
+  FormControl
 } from '@material-ui/core'
 
 import { Autocomplete } from '@material-ui/lab';
@@ -55,12 +56,24 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(1),
       width: '100%',
+    },
+    '& div': {
+      // position: 'relative'
     }
   },
   select: {
     width: '100%',
   }
 }))
+
+const praiseEmpty = {
+  id: '',
+  status: 'suggestion',
+  name: '',
+  artist: '',
+  tone: '?',
+  transpose: 0
+}
 
 export default function EditPraisePage() {
   const classes = useStyles()
@@ -69,7 +82,7 @@ export default function EditPraisePage() {
   const { praiseId } = router.query
 
   const [isLoading, setIsLoading] = useState(true)
-  const [praise, setPraise] = useState({})
+  const [praise, setPraise] = useState(praiseEmpty)
   
   const pageTitle = (praiseId ? "Editar" : "Nova sugestão de") + " louvor"
 
@@ -130,10 +143,10 @@ export default function EditPraisePage() {
 export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   const classes = useStyles()
 
-  const [praise, setPraise] = useState(initialValue || {})
+  const [praise, setPraise] = useState(initialValue || praiseEmpty)
 
   useEffect(() => {
-    setPraise(initialValue || {})
+    setPraise(initialValue || praiseEmpty)
   }, [initialValue])
 
   async function handleOnSubmit(event){
@@ -213,7 +226,7 @@ function EditPraiseFields({ value, onChange }) {
         />
 
       <div style={{display: 'flex', marginBottom: 16}}>
-        <div style={{flex: 1}}>
+        <FormControl style={{flex: 1}}>
           <InputLabel id="form-praises-tone-label">Tom original</InputLabel>
           <Select
             labelId="form-praises-tone-label"
@@ -223,16 +236,16 @@ function EditPraiseFields({ value, onChange }) {
             displayEmpty
             onChange={(e) => setValue({...value, tone: e.target.value})}
           >
-            <MenuItem value="">
+            <MenuItem value="?">
               Não definido
             </MenuItem>
             {toneOptions.map((tone => (
               <MenuItem key={tone} value={tone}>{tone}</MenuItem>
             )))}
           </Select>
-        </div>
-        <div style={{flex: 1, marginLeft: 10}}>
-        <InputLabel id="form-praises-transpose-label">Transpose (ST)</InputLabel>
+        </FormControl>
+        <FormControl style={{flex: 1, marginLeft: 10}}>
+          <InputLabel id="form-praises-transpose-label">Transpose (ST)</InputLabel>
           <Select
             labelId="form-praises-transpose-label"
             id="form-praises-transpose"
@@ -253,7 +266,7 @@ function EditPraiseFields({ value, onChange }) {
               <MenuItem key={transpose} value={transpose}>{transpose}</MenuItem>
             ))}
           </Select>
-        </div>
+        </FormControl>
       </div>
 
       <Autocomplete

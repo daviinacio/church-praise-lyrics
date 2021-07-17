@@ -93,12 +93,14 @@ export const index = async (req, res) => {
   if(praiseId){
     const praise = praises.filter(praise => praise.id == praiseId)
 
-    if(praise.length > 0)
+    if(praise.length > 0){
       return res.status(200).json(praise[0])
-    else
+    }
+    else {
       return res.status(400).json({
         message: 'Prase not found'
       })
+    }
   }
   else return res.status(200).json(praises)
 }
@@ -111,7 +113,9 @@ export const store = async (req, res) => {
       artist: 'Teste',
       created_by: {
         "name": "Davi Inácio"
-      }
+      },
+      tone: '?',
+      transpose: 0
     },
     ...req.body,
     id: uuid()

@@ -373,7 +373,7 @@ export default function PraisesPage() {
         className={classes.fab}
         onClick={() => {
           if(editWithDialog)
-            handleDialogEditorInflate({})
+            handleDialogEditorInflate(undefined)
           else
             router.push('/praises/new')
         }}>
