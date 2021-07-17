@@ -154,7 +154,7 @@ export const destroy = async (req, res) => {
   //if(process.env.NODE_ENV === 'development')
   //  await sleep(1000)
 
-  return res.status(204).json({
+  return res.status(200).json({
     message: "praise.destroy"
   })
 }
