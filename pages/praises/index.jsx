@@ -53,25 +53,11 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 8,
     marginBottom: 8
   },
-  expand: {
-    transform: 'rotate(0deg)',
-    marginLeft: 'auto',
-    transition: theme.transitions.create('transform', {
-      duration: theme.transitions.duration.shortest
-    }),
-  },
   expandOpen: {
     transform: 'rotate(180deg)'
   },
   tone: {
     backgroundColor: theme.palette.primary.dark
-  },
-  form: {
-    '& .MuiTextField-root': {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      width: '100%',
-    }
   }
 }))
 
