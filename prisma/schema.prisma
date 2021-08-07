@@ -1,0 +1,35 @@
+datasource db {
+  provider  = "sqlite"
+  url       = env("SQLITE_PATH")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Users {
+  id              String          @id @map("_id") @default(uuid())
+  name            String
+  username        String          @unique
+  email           String          @unique
+  password        String
+  avatar_url      String?
+  sys_admin       Boolean         @default(false)
+  is_active       Boolean         @default(true)
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @default(now())
+
+  roles           Roles[]
+
+  @@map("users")
+}
+
+model Roles {
+  id              Int             @id @map("_id") @default(autoincrement())
+  name            String          @unique
+  is_active       Boolean         @default(true)
+
+  users           Users[]
+
+  @@map("roles")
+}

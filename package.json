@@ -7,14 +7,18 @@
     "build": "next build",
     "start": "next start"
   },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "dependencies": {
     "@material-ui/core": "^4.12.1",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
-    "@prisma/client": "^2.26.0",
+    "@prisma/client": "^2.28.0",
     "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^1.1.1",
+    "date-fns": "^2.23.0",
     "jsonwebtoken": "^8.5.1",
     "next": "10.x",
     "next-auth": "^3.27.3",

@@ -1,66 +1,99 @@
 export const RouteNotFoundError = {
+  status: 404,
   code: 'ERR_ROUTE_NOT_FOUND',
-  message: 'The route you trying to access does not exists'
+  message: 'The route you trying to access does not exists',
+  result: null
 }
 
 export const UserNotFoundError = {
+  status: 400,
   code: 'ERR_USER_NOT_FOUND',
-  message: 'There\'s no user with this id, email or username'
+  message: 'There\'s no user with this id, email or username',
+  result: null
 }
 
 export const PostNotFoundError = {
+  status: 400,
   code: 'ERR_POST_NOT_FOUND',
-  message: 'There\'s no post with this id or reference'
+  message: 'There\'s no post with this id or reference',
+  result: null
 }
 
 export const TagNotFoundError = {
+  status: 400,
   code: 'ERR_TAG_NOT_FOUND',
-  message: 'There\'s no tag with this id or reference'
+  message: 'There\'s no tag with this id or reference',
+  result: null
 }
 
 export const RoleNotFoundError = {
+  status: 400,
   code: 'ERR_ROLE_NOT_FOUND',
-  message: 'There\'s no role with this id or reference'
+  message: 'There\'s no role with this id or reference',
+  result: null
 }
 
 export const ValidationFailedError = {
+  status: 400,
   code: 'ERR_VALIDATION_FAILED',
-  message: 'Some input data was failed on validation'
+  message: 'Some input data was failed on validation',
+  result: null
 }
 
 export const EmptyBodyRequestError = {
+  status: 400,
   code: 'ERR_EMPTY_BODY_REQUEST',
-  message: 'This route needs at least one parameter'
+  message: 'This route needs at least one parameter',
+  result: null
 }
 
 export const SqlDuplicatedEntryError = {
+  status: 400,
   code: 'ERR_SQL_DUPLICATED_ENTRY',
-  message: 'This entry can not be duplicated'
+  message: 'This entry can not be duplicated',
+  result: null
 }
 
 export const UnauthorizedError = {
+  status: 401,
   code: 'ERR_UNAUTHORIZED',
-  message: 'You need authorization to access this endpoint'
+  message: 'You need authorization to access this endpoint',
+  result: null
 }
 
 export const AuthTokenInvalidError = {
+  status: 401,
   code: 'ERR_AUTH_TOKEN_INVALID',
-  message: 'Your token is not valid'
+  message: 'Your token is not valid',
+  result: null
 }
 
 export const AuthTokenExpiredError = {
+  status: 401,
   code: 'ERR_AUTH_TOKEN_EXPIRED',
-  message: 'Your token expired'
-}
-
-export const DontHavePermissionError = {
-  code: 'ERR_DONT_HAVE_PERMISSION',
-  message: 'You don\'t have permission to proceed'
+  message: 'Your token expired',
+  result: null
 }
 
 export const TooManyActiveSessions = {
+  status: 401,
   code: 'ERR_TOO_MANY_ACTIVE_SESSIONS',
-  message: 'There is too many active sessions on different IPs'
+  message: 'There is too many active sessions on different IPs',
+  result: null
+}
+
+export const DontHavePermissionError = {
+  status: 403,
+  code: 'ERR_DONT_HAVE_PERMISSION',
+  message: 'You don\'t have permission to proceed',
+  result: null
+}
+
+export const FutureFeatureError = {
+  status: 501,
+  code: 'ERR_FUTURE_FEATURE',
+  message: 'This feature was not implemented yet',
+  result: null
 }
 
 export const HttpErrorCodes = {
@@ -95,23 +128,24 @@ export const HttpErrorCodes = {
 }
 
 const status = (code) => {
-  const status_by_code = {
-    'ERR_ROUTE_NOT_FOUND': 404,
-    'ERR_USER_NOT_FOUND': 400,
-    'ERR_POST_NOT_FOUND': 400,
-    'ERR_TAG_NOT_FOUND': 400,
-    'ERR_ROLE_NOT_FOUND': 400,
-    'ERR_VALIDATION_FAILED': 400,
-    'ERR_EMPTY_BODY_REQUEST': 400,
-    'ERR_SQL_DUPLICATED_ENTRY': 400,
-    'ERR_UNAUTHORIZED': 401,
-    'ERR_AUTH_TOKEN_INVALID': 401,
-    'ERR_AUTH_TOKEN_EXPIRED': 401,
-    'ERR_DONT_HAVE_PERMISSION': 403,
-    'ERR_TOO_MANY_ACTIVE_SESSIONS': 401
-  };
+  const erros = [
+    RouteNotFoundError,
+    UserNotFoundError,
+    PostNotFoundError,
+    TagNotFoundError,
+    RoleNotFoundError,
+    ValidationFailedError,
+    EmptyBodyRequestError,
+    SqlDuplicatedEntryError,
+    UnauthorizedError,
+    AuthTokenInvalidError,
+    AuthTokenExpiredError,
+    TooManyActiveSessions,
+    DontHavePermissionError,
+    FutureFeatureError
+  ]
 
-  return status_by_code[code] || 500;
+  return (erros.filter(err => err.code === code)[0] || { status:  500 }).status
 }
 
 export default {
