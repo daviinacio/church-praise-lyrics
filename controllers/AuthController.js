@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { sign } from "jsonwebtoken"
+import { AuthTokenInvalidError } from "../src/errors"
 
 const prisma = new PrismaClient
 
@@ -33,6 +34,24 @@ export const createSession = async (user, keep) => {
   }
 }
 
-export const killSession = (token) => {
-  
+export const killSession = async (jwt_token) => {
+  if(jwt_token.split(' ').length < 2)
+    throw AuthTokenInvalidError
+
+  const type = jwt_token.split(' ')[0]
+  const token = jwt_token.split(' ')[1]
+
+  const session = await prisma.sessions.findFirst({
+    where: { token, type: type.toLowerCase(), inactivated_at: null, is_active: true }
+  })
+
+  if(session)
+    await prisma.sessions.update({
+      where: { id: session.id },
+      data: {
+        inactivated_at: new Date(),
+        is_active: false
+      }
+    })
+  else throw AuthTokenInvalidError
 }

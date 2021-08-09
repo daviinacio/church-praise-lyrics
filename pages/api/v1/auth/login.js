@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { compareSync } from "bcryptjs";
-import { createSession } from "../../../../controllers/AutnController";
+import { createSession } from "../../../../controllers/AuthController";
 import errors, { UnauthorizedError, UserNotFoundError } from "../../../../src/errors";
 import RouteNotFound from "../../404";
 
@@ -29,6 +29,7 @@ export const login = async (req, res) => {
         const token = await createSession(user, keep === 'true')
         return res.status(200).json({
           status: 200,
+          message: "A new session was created for your account",
           result: token
         })
       }
