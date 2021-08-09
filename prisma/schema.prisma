@@ -20,8 +20,24 @@ model Users {
   updated_at      DateTime        @default(now())
 
   roles           Roles[]
+  sessions        Sessions[]
 
   @@map("users")
+}
+
+model Sessions {
+  id              Int             @id @map("_id") @default(autoincrement())
+  token           String
+  type            String          @default("bearer")
+  expires_in      Int
+  logged_at       DateTime        @default(now())
+  inactivated_at  DateTime?
+  is_active       Boolean         @default(true)
+
+  user          Users           @relation(fields: [user_id], references: [id]) 
+  user_id       String
+
+  @@map("sessions")
 }
 
 model Roles {
