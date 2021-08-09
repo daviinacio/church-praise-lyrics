@@ -1,8 +1,7 @@
 export const RouteNotFoundError = {
   status: 404,
   code: 'ERR_ROUTE_NOT_FOUND',
-  message: 'The route you trying to access does not exists',
-  result: null
+  message: 'The route you trying to access does not exists'
 }
 
 export const UserNotFoundError = {
