@@ -1,11 +1,62 @@
 import { PrismaClient } from "@prisma/client"
-import { sign } from "jsonwebtoken"
-import { AuthTokenInvalidError } from "../src/errors"
+import { sign, verify } from "jsonwebtoken"
+import { AuthTokenExpiredError, AuthTokenInvalidError, UnauthorizedError } from "../src/errors"
 
 const prisma = new PrismaClient
 
-export const getAuthUser = (authorization) => {
+export const getAuthUser = async (authorization, options) => {
+  if(!authorization){
+    if(options.indexOf("anonymous") === -1)
+      throw UnauthorizedError
+    else return undefined
+  }
 
+  if(authorization.split(' ').length < 2)
+    throw AuthTokenInvalidError
+
+  const type = authorization.split(' ')[0].trim()
+  const token = authorization.split(' ')[1].trim()
+
+  try {
+    const decoded = verify(token, process.env.JWT_SECRET || '')
+
+    if(!decoded.user)
+      throw AuthTokenInvalidError;
+
+    const userWithSessions = await prisma.users.findFirst({
+      where: {
+        id: decoded.user.id,
+        is_active: true
+      },
+      include: {
+        sessions: {
+          where: {
+            type: type,
+            token: token,
+            inactivated_at: null,
+            is_active: true
+          }
+        }
+      }
+    })
+
+    userWithSessions.password = undefined
+    userWithSessions.session = userWithSessions.sessions[0]
+    userWithSessions.sessions = undefined
+
+    if(userWithSessions && userWithSessions.session)
+      return userWithSessions
+    else throw AuthTokenInvalidError 
+  }
+  catch(err){
+    if((err.name || err.code) && err.name !== 'JsonWebTokenError')
+      await killSession(authorization);
+
+    throw {
+      'TokenExpiredError': AuthTokenExpiredError,
+      'JsonWebTokenError': AuthTokenInvalidError,
+    } [err.name] || err;
+  }
 }
 
 export const createSession = async (user, keep) => {
@@ -21,7 +72,7 @@ export const createSession = async (user, keep) => {
   const session = await prisma.sessions.create({
     data: {
       token: token,
-      type: "bearer",
+      type: "Bearer",
       expires_in: expires_in,
       user_id: user.id,
     }
@@ -34,15 +85,15 @@ export const createSession = async (user, keep) => {
   }
 }
 
-export const killSession = async (jwt_token) => {
-  if(jwt_token.split(' ').length < 2)
+export const killSession = async (authorization) => {
+  if(authorization.split(' ').length < 2)
     throw AuthTokenInvalidError
 
-  const type = jwt_token.split(' ')[0]
-  const token = jwt_token.split(' ')[1]
+  const type = authorization.split(' ')[0].trim()
+  const token = authorization.split(' ')[1].trim()
 
   const session = await prisma.sessions.findFirst({
-    where: { token, type: type.toLowerCase(), inactivated_at: null, is_active: true }
+    where: { token, type, inactivated_at: null, is_active: true }
   })
 
   if(session)

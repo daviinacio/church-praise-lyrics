@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { compareSync } from "bcryptjs";
 import { createSession } from "../../../../controllers/AuthController";
-import errors, { UnauthorizedError, UserNotFoundError } from "../../../../src/errors";
+import errors, { ValidationFailedError } from "../../../../src/errors";
 import RouteNotFound from "../../404";
 
 const prisma = new PrismaClient()
@@ -34,11 +34,20 @@ export const login = async (req, res) => {
         })
       }
       else throw {
-        ...UnauthorizedError,
-        message: "Senha incorreta"
+        ...ValidationFailedError,
+        message: "Senha incorreta",
+        validation: [
+          { field: "password", type: "wrong" }
+        ]
       }
     }
-    else throw UserNotFoundError
+    else throw {
+      ...ValidationFailedError,
+      message: "Membro não encontrado",
+      validation: [
+        { field: "email", type: "not-found" }
+      ]
+    }
   }
   catch(ex){
     return res.status(errors.status(ex.code)).json(ex)

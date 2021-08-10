@@ -1,6 +1,6 @@
 datasource db {
-  provider  = "sqlite"
-  url       = env("SQLITE_PATH")
+  provider  = "mysql"
+  url       = env("DATABASE_URL")
 }
 
 generator client {
@@ -27,7 +27,7 @@ model Users {
 
 model Sessions {
   id              Int             @id @map("_id") @default(autoincrement())
-  token           String
+  token           String          @db.VarChar(256)
   type            String          @default("bearer")
   expires_in      Int
   logged_at       DateTime        @default(now())
