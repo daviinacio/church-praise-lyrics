@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma migrate deploy && next build",
-    "start": "npx prisma migrate deploy && next start"
+    "start": "next start"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
