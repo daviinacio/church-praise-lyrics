@@ -30,6 +30,7 @@ import {
 import {
   Add as AddIcon
 } from '@material-ui/icons'
+import useAPI from '../../services/useAPI';
 
 const editWithDialog = true
 
@@ -59,6 +60,7 @@ const useStyles = makeStyles((theme) => ({
 export default function SchedulePage() {
   const classes = useStyles()
   const router = useRouter()
+  const api = useAPI()
 
   // Date
   function getDateMoment(date){
@@ -82,12 +84,11 @@ export default function SchedulePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(async () => {
-    const { data } = await axios.get('/api/v1/concerts')
-    
-    console.log(data)
-
-    setConcerts(data)
-    setIsLoading(false)
+    await api.get('concerts').then(({data}) => {
+      setConcerts(data)
+      setIsLoading(false)
+    })
+    .catch(() => {})
   }, [])
 
   return (

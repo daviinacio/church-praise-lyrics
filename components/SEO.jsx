@@ -8,7 +8,7 @@ export default function SEO({ title, description, children }){
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-      <title>{ title + ' · ' + siteName }</title>
+      <title>{ (title ? title + ' · ' : '') + siteName }</title>
       <meta name="description" content={ description } />
       {/* <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub" /> */}
       {/* <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub" /> */}

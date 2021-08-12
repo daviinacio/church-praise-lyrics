@@ -1,5 +1,6 @@
 import RouteNotFound from "../../404";
 import { sleep, uuid } from "../../../../src/dev";
+import Middleware from '../../../../middlewares/CoreMiddleware'
 
 const handler = async (req, res) => {
   switch(req.method.trim().toUpperCase()){
@@ -11,7 +12,7 @@ const handler = async (req, res) => {
   };
 };
 
-export const index = async (req, res) => {
+export const index = Middleware(['auth'], async (req, res) => {
   const { praiseId } = req.query
 
   const praises = []
@@ -103,9 +104,9 @@ export const index = async (req, res) => {
     }
   }
   else return res.status(200).json(praises)
-}
+})
 
-export const store = async (req, res) => {
+export const store = Middleware(['auth'], async (req, res) => {
   const praise = {
     ...{
       status: 'suggestion',
@@ -127,9 +128,9 @@ export const store = async (req, res) => {
 
   console.log('praise.store: ', praise)
   return res.status(200).json(praise)
-}
+})
 
-export const update = async (req, res) => {
+export const update = Middleware(['auth'], async (req, res) => {
   const { praiseId } = req.query
   const { status, name } = req.body
 
@@ -147,9 +148,9 @@ export const update = async (req, res) => {
   return res.status(200).json({
     message: "praise.update"
   })
-}
+})
 
-export const destroy = async (req, res) => {
+export const destroy = Middleware(['auth'], async (req, res) => {
   const { praiseId } = req.query
 
   console.log(`praise.destroy ${praiseId}`)
@@ -161,6 +162,6 @@ export const destroy = async (req, res) => {
   return res.status(200).json({
     message: "praise.destroy"
   })
-}
+})
 
 export default handler;

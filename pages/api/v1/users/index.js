@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import RouteNotFound from "../../404";
 import errors, { FutureFeatureError, UserNotFoundError } from "../../../../src/errors"
+import Middleware from '../../../../middlewares/CoreMiddleware'
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,7 @@ const handler = async (req, res) => {
   };
 };
 
-export const index = async (req, res) => {
+export const index = Middleware(['auth'], async (req, res) => {
   try {
     const { userId } = req.query;
 
@@ -24,7 +25,7 @@ export const index = async (req, res) => {
       })
 
       if(user) return res.status(200).json({
-        status: 'success',
+        status: 200,
         result: user
       })
       else throw UserNotFoundError
@@ -41,33 +42,33 @@ export const index = async (req, res) => {
   catch (ex) {
     return res.status(errors.status(ex.code)).json(ex)
   }
-}
+})
 
-export const store = async (req, res) => {
+export const store = Middleware(['auth'], async (req, res) => {
   try {
     throw FutureFeatureError
   }
   catch (ex) {
     return res.status(errors.status(ex.code)).json(ex)
   }
-}
+})
 
-export const update = async (req, res) => {
+export const update = Middleware(['auth'], async (req, res) => {
   try {
     throw FutureFeatureError
   }
   catch (ex) {
     return res.status(errors.status(ex.code)).json(ex)
   }
-}
+})
 
-export const destroy = async (req, res) => {
+export const destroy = Middleware(['auth'], async (req, res) => {
   try {
     throw FutureFeatureError
   }
   catch (ex) {
     return res.status(errors.status(ex.code)).json(ex)
   }
-}
+})
 
 export default handler;

@@ -4,20 +4,14 @@ import SwipeableViews from 'react-swipeable-views'
 import SEO from '../../components/SEO'
 import TabPanel, { a11yProps } from '../../components/TabPanel'
 import { makeStyles } from '@material-ui/core/styles'
-import axios from 'axios'
 
 import {
   AppBar,
   Avatar,
   Backdrop,
-  Button,
   Card,
   CardHeader,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Fab,
   IconButton,
   Menu,
@@ -30,11 +24,11 @@ import {
 
 import {
   MoreVert as MoreVertIcon,
-  ExpandMore as ExpandMoreIcon,
   Add as AddIcon
 } from '@material-ui/icons'
 
 import {EditPraiseDialog} from './[praiseId]/edit'
+import useAPI from '../../services/useAPI'
 
 const editWithDialog = true
 
@@ -64,6 +58,7 @@ const useStyles = makeStyles((theme) => ({
 export default function PraisesPage() {
   const classes = useStyles()
   const router = useRouter()
+  const api = useAPI()
 
   // Tabs
   const [tab, setTab] = useState(0)
@@ -89,7 +84,7 @@ export default function PraisesPage() {
   async function handleMenuChangeStatus(praiseId, newStatus){
     handleMenuClose()
 
-    await axios.put(`/api/v1/praises/${praiseId}`, {
+    await api.get(`praises/${praiseId}`, {
       status: newStatus
     })
 
@@ -112,7 +107,7 @@ export default function PraisesPage() {
   async function handleMenuRemove(praiseId){
     handleMenuClose()
 
-    await axios.delete(`/api/v1/praises/${praiseId}`)
+    await api.delete(`praises/${praiseId}`)
     
     setPraises(praises.filter(praise => {
       return praise.id !== praiseId
@@ -157,10 +152,11 @@ export default function PraisesPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(async () => {
-    const { data } = await axios.get('/api/v1/praises')
-
-    setPraises(data)
-    setIsLoading(false)
+    await api.get('praises').then(({data}) => {
+      setPraises(data)
+      setIsLoading(false)
+    })
+    .catch(() => {})
   }, [])
 
   return (

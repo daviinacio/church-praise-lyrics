@@ -30,22 +30,29 @@ export const login = async (req, res) => {
         return res.status(200).json({
           status: 200,
           message: "A new session was created for your account",
-          result: token
+          result: {
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              username: user.username,
+              email: user.email,
+              avatar_url: user.avatar_url
+            }
+          }
         })
       }
       else throw {
         ...ValidationFailedError,
-        message: "Senha incorreta",
         validation: [
-          { field: "password", type: "wrong" }
+          { field: "password", message: "Senha incorreta" }
         ]
       }
     }
     else throw {
       ...ValidationFailedError,
-      message: "Membro não encontrado",
       validation: [
-        { field: "email", type: "not-found" }
+        { field: "email", message: "Membro não encontrado" }
       ]
     }
   }

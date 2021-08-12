@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import SEO from '../../../components/SEO'
 import { makeStyles } from '@material-ui/core/styles'
-import axios from 'axios'
+import useAPI from '../../../services/useAPI'
 
 import { 
   AppBar,
@@ -78,6 +78,7 @@ const praiseEmpty = {
 export default function EditPraisePage() {
   const classes = useStyles()
   const router = useRouter()
+  const api = useAPI()
 
   const { praiseId } = router.query
 
@@ -88,7 +89,7 @@ export default function EditPraisePage() {
 
   useEffect(async () => {
     if(praiseId){
-      const { data } = await axios.get(`/api/v1/praises/${praiseId}`)
+      const { data } = await api.get(`praises/${praiseId}`)
 
       setPraise(data)
       setIsLoading(false)
@@ -103,9 +104,9 @@ export default function EditPraisePage() {
     event.preventDefault();
 
     if(praiseId)
-      await axios.put(`/api/v1/praises/${praiseId}`, praise)
+      await api.put(`praises/${praiseId}`, praise)
     else
-      await axios.post(`/api/v1/praises/`, praise)
+      await api.post(`praises/`, praise)
 
     router.push('/praises')
   }
@@ -142,6 +143,7 @@ export default function EditPraisePage() {
 
 export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   const classes = useStyles()
+  const api = useAPI()
 
   const [praise, setPraise] = useState(initialValue || praiseEmpty)
 
@@ -153,13 +155,13 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
     event.preventDefault();
 
     if(praise.id){
-      await axios.put(`/api/v1/praises/${praise.id}`, praise)
+      await api.put(`praises/${praise.id}`, praise)
 
       if(typeof onSave === 'function')
         onSave(praise)
     }
     else {
-      const response = await axios.post(`/api/v1/praises`, praise)
+      const response = await api.post(`praises`, praise)
 
       if(typeof onSave === 'function')
         onSave(response.data)
