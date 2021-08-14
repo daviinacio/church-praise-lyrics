@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import Snackbar from "@material-ui/core/Snackbar";
-import Slide from "@material-ui/core/Slide";
 import Alert from "@material-ui/lab/Alert";
+import { Snackbar, Backdrop, Slide } from "@material-ui/core";
 
 export const withSnackbar = WrappedComponent => {
   return props => {
@@ -32,20 +31,26 @@ export const withSnackbar = WrappedComponent => {
     return (
       <>
         <WrappedComponent {...props} snackbar={showMessage} />
-        <Snackbar
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "center"
-          }}
-          autoHideDuration={duration}
-          open={open}
-          onClose={handleClose}
-          TransitionComponent={Slide}
-        >
-          <Alert variant="filled" onClose={handleClose} severity={severity}>
-            {message}
-          </Alert>
-        </Snackbar>
+        
+        <Backdrop
+          variant={ severity === 'error' ? "snackbar" : "snackbar-error"}
+          onClick={handleClose}
+          open={open}>
+          <Snackbar
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "right"
+            }}
+            autoHideDuration={duration}
+            open={open}
+            onClose={handleClose}
+            TransitionComponent={Slide}
+          >
+            <Alert variant="filled" onClose={handleClose} severity={severity}>
+              {message}
+            </Alert>
+          </Snackbar>
+        </Backdrop>
       </>
     );
   };

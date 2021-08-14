@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import SEO from '../../../components/SEO'
 import { makeStyles } from '@material-ui/core/styles'
-import useAPI from '../../../services/useAPI'
 
 import { 
   AppBar,
@@ -24,7 +23,8 @@ import {
   FormControl
 } from '@material-ui/core'
 
-import { Autocomplete } from '@material-ui/lab';
+import { Autocomplete } from '@material-ui/lab'
+import { useAPI } from '../../../services/api'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -155,16 +155,18 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
     event.preventDefault();
 
     if(praise.id){
-      await api.put(`praises/${praise.id}`, praise)
-
-      if(typeof onSave === 'function')
-        onSave(praise)
+      await api.put(`praises/${praise.id}`, praise).then(({ data }) => {
+        if(typeof onSave === 'function')
+          onSave(data.result)
+      })
+      .catch(() => {})
     }
     else {
-      const response = await api.post(`praises`, praise)
-
-      if(typeof onSave === 'function')
-        onSave(response.data)
+      await api.post(`praises`, praise).then(({ data }) => {
+        if(typeof onSave === 'function')
+          onSave(data.result)
+      })
+      .catch(() => {})
     }
   }
 

@@ -56,7 +56,7 @@ export const SqlDuplicatedEntryError = {
 export const UnauthorizedError = {
   status: 401,
   code: 'ERR_UNAUTHORIZED',
-  message: 'You need authorization to access this endpoint',
+  message: 'Essa ação só é permitida para membros autenticados\nPor favor, faça login e tente novamente',
   result: null
 }
 
@@ -70,7 +70,7 @@ export const AuthTokenInvalidError = {
 export const AuthTokenExpiredError = {
   status: 401,
   code: 'ERR_AUTH_TOKEN_EXPIRED',
-  message: 'Your token expired',
+  message: 'Seu login expirou\nPor favor, efetue o login novamente caso queira efetuar alguma ação no aplicativo',
   result: null
 }
 
@@ -84,21 +84,21 @@ export const TooManyActiveSessions = {
 export const DontHavePermissionError = {
   status: 403,
   code: 'ERR_DONT_HAVE_PERMISSION',
-  message: 'You don\'t have permission to proceed',
+  message: 'Infelizmente, você não tem permissão para realizar essa ação\nPor favor, entre em contato com o membro responsável pela administração do aplicativo',
   result: null
 }
 
 export const FutureFeatureError = {
   status: 501,
   code: 'ERR_FUTURE_FEATURE',
-  message: 'This feature was not implemented yet',
+  message: 'Essa funcionalidade ainda não foi implementada',
   result: null
 }
 
 export const HttpErrorCodes = {
   400: {
     title: "Parâmetros inválidos",
-    message: "Não foi possivel encontrar o conteúdo requerido"
+    message: "Não foi possível encontrar o conteúdo requerido"
   },
   401: {
     title: "Autenticação necessária",

@@ -11,7 +11,7 @@ const handler = async (req, res) => {
   };
 };
 
-export const index = Middleware(['auth'], async (req, res) => {
+export const index = Middleware(['auth:anonymous'], async (req, res) => {
   const { concertId } = req.query
 
   const concerts = []

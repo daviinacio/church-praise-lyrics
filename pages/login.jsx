@@ -1,15 +1,15 @@
-import SEO from '../components/SEO';
+import SEO from '../components/SEO'
 
 import { 
   AppBar, Container, Typography, Checkbox, Button, Paper, TextField, makeStyles, Grid, FormControlLabel
-} from '@material-ui/core';
+} from '@material-ui/core'
 
 import Image from 'next/image'
 
-import { useState } from 'react';
-import useAPI from '../services/useAPI'
-import useAuth from '../services/useAuth';
-import { useRouter } from 'next/router';
+import { useState } from 'react'
+import { useAuth } from '../src/auth'
+import { useRouter } from 'next/router'
+import { useAPI } from '../services/api'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -17,6 +17,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    minHeight: '-webkit-fill-available',
     height: "100%",
     '& > *': {
       paddingRight: theme.spacing(2),
@@ -67,15 +68,15 @@ export default function LoginPage() {
     
     // Client validations
     if(email.trim() === '')
-      formValidation.email = "Campo obrigatório"
+      formValidation.email = "Preencha seu login antes de continuar"
 
     if(password.trim() === '')
-      formValidation.password = "Campo obrigatório"
+      formValidation.password = "Preencha a senha antes de continuar"
 
-    setValidation(formValidation)
-
-    if(Object.keys(formValidation).length > 0)
+    if(Object.keys(formValidation).length > 0){
+      setValidation(formValidation)
       return;
+    }
 
     await api.post(`auth/login?keep=${keep}`, {
       email, password
@@ -87,10 +88,15 @@ export default function LoginPage() {
       )
 
       router.push('/')
-      console.log('then', data)
     })
-    .catch(({error}) => {
-      console.log('catch', error)
+    .catch(({response}) => {
+      const validation = Object.fromEntries(
+        response.data.validation.map(e => [
+          e.field, e.message
+        ])
+      )
+      
+      setValidation(validation)
     })
   }
 

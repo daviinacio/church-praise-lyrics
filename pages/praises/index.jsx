@@ -28,7 +28,8 @@ import {
 } from '@material-ui/icons'
 
 import {EditPraiseDialog} from './[praiseId]/edit'
-import useAPI from '../../services/useAPI'
+import { useAPI } from '../../services/api'
+import { useAuth } from '../../src/auth'
 
 const editWithDialog = true
 
@@ -58,10 +59,11 @@ const useStyles = makeStyles((theme) => ({
 export default function PraisesPage() {
   const classes = useStyles()
   const router = useRouter()
+  const auth = useAuth()
   const api = useAPI()
 
   // Tabs
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState(2)
 
   useEffect(() => {
     setTab(parseInt(sessionStorage.getItem('praises.tab')) || 0)
@@ -84,15 +86,16 @@ export default function PraisesPage() {
   async function handleMenuChangeStatus(praiseId, newStatus){
     handleMenuClose()
 
-    await api.get(`praises/${praiseId}`, {
+    await api.put(`praises/${praiseId}`, {
       status: newStatus
+    }).then(() => {
+      setPraises(praises.map(praise => {
+        if(praise.id === praiseId)
+          praise.status = newStatus
+        return praise
+      }))
     })
-
-    setPraises(praises.map(praise => {
-      if(praise.id === praiseId)
-        praise.status = newStatus
-      return praise
-    }))
+    .catch(() => {})
   }
 
   function handleMenuEdit(data){
@@ -107,11 +110,12 @@ export default function PraisesPage() {
   async function handleMenuRemove(praiseId){
     handleMenuClose()
 
-    await api.delete(`praises/${praiseId}`)
-    
-    setPraises(praises.filter(praise => {
-      return praise.id !== praiseId
-    }))
+    await api.delete(`praises/${praiseId}`).then(() => {
+      setPraises(praises.filter(praise => {
+        return praise.id !== praiseId
+      }))
+    })
+    .catch(() => {})
   }
 
   function handleMenuClose(){
@@ -199,14 +203,14 @@ export default function PraisesPage() {
                     //     { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
                     //   </Avatar>
                     // }
-                    action={
+                    action={ auth.isAuthenticated() &&
                       <IconButton
                         aria-label="settings"
                         onClick={(event) => { handleMenuInflate(event, item) }}>
                         <MoreVertIcon />
                       </IconButton>
-                      
                     }
+
                     title={item.name}
                     subheader={item.artist}
                   />

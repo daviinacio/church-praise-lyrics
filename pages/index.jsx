@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import SEO from '../components/SEO';
-import useAPI from '../services/useAPI'
+import { useEffect } from 'react'
+import SEO from '../components/SEO'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
-import { Container, makeStyles } from '@material-ui/core';
+import { Container, makeStyles } from '@material-ui/core'
+import { useAPI } from '../services/api'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -17,14 +17,13 @@ const useStyles = makeStyles((theme) => ({
 export default function MainPage() {
   const classes = useStyles()
   const router = useRouter()
-  const api = useAPI({
-    suppressRedirect: true
-  })
+  const api = useAPI()
 
   useEffect(() => {
-    api.post('auth/me')
-      .then(() => router.push('/schedule'))
-      .catch(() => router.push('/login'))
+    router.push('/praises')
+    // api.post('auth/me')
+    //   .then(() => router.push('/schedule'))
+    //   .catch(() => router.push('/login'))
   }, [])
 
   return <>

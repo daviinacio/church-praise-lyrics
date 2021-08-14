@@ -46,11 +46,11 @@ export const getAuthUser = async (authorization, options) => {
 
     if(userWithSessions && userWithSessions.session)
       return userWithSessions
-    else throw AuthTokenInvalidError 
+    else throw AuthTokenExpiredError 
   }
   catch(err){
     if((err.name || err.code) && err.name !== 'JsonWebTokenError')
-      await killSession(authorization);
+      await killSession(authorization, true);
 
     throw {
       'TokenExpiredError': AuthTokenExpiredError,
@@ -85,7 +85,7 @@ export const createSession = async (user, keep) => {
   }
 }
 
-export const killSession = async (authorization) => {
+export const killSession = async (authorization, suppressNotFound = false) => {
   if(authorization.split(' ').length < 2)
     throw AuthTokenInvalidError
 
@@ -104,5 +104,8 @@ export const killSession = async (authorization) => {
         is_active: false
       }
     })
-  else throw AuthTokenInvalidError
+  else {
+    if(suppressNotFound) return;
+    else throw AuthTokenInvalidError
+  }
 }

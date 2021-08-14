@@ -9,7 +9,7 @@ const Middleware = (middlewares, fn) => async (req, res) => {
 
     const extractOptions = (key) => {
       return middlewares.filter(md => md.indexOf(key) >= 0)[0]
-        .split('|').filter(md => md !== key)
+        .split(':').filter(md => md !== key)
     }
 
     // Authentication Middleware

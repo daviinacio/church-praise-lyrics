@@ -5,6 +5,8 @@
     "have",
     "path",
     "permission",
-    "sqlite"
+    "sqlite",
+    "use",
+    "vagalume"
   ]
 }
