@@ -8,7 +8,7 @@ export const getAuthUser = async (authorization, options) => {
   if(!authorization){
     if(options.indexOf("anonymous") === -1)
       throw UnauthorizedError
-    else return undefined
+    else return {}
   }
 
   if(authorization.split(' ').length < 2)
@@ -40,13 +40,15 @@ export const getAuthUser = async (authorization, options) => {
       }
     })
 
-    userWithSessions.password = undefined
-    userWithSessions.session = userWithSessions.sessions[0]
-    userWithSessions.sessions = undefined
+    if(userWithSessions){
+      if(userWithSessions.sessions.length > 0){
+        userWithSessions.password = undefined
+        userWithSessions.session = userWithSessions.sessions[0]
+        userWithSessions.sessions = undefined
 
-    if(userWithSessions && userWithSessions.session)
-      return userWithSessions
-    else throw AuthTokenExpiredError 
+        return userWithSessions
+      } else throw AuthTokenExpiredError 
+    } else throw AuthTokenInvalidError 
   }
   catch(err){
     if((err.name || err.code) && err.name !== 'JsonWebTokenError')

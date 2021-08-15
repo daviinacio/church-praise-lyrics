@@ -30,7 +30,7 @@ import {
 import {
   Add as AddIcon
 } from '@material-ui/icons'
-import useAPI from '../../services/useAPI';
+import { useAPI } from '../../services/api';
 
 const editWithDialog = true
 

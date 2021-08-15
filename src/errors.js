@@ -11,6 +11,13 @@ export const UserNotFoundError = {
   result: null
 }
 
+export const PraiseNotFoundError = {
+  status: 400,
+  code: 'ERR_PRAISE_NOT_FOUND',
+  message: 'Nenhum louvor encontrado com esse ID',
+  result: null
+}
+
 export const PostNotFoundError = {
   status: 400,
   code: 'ERR_POST_NOT_FOUND',
@@ -36,6 +43,13 @@ export const ValidationFailedError = {
   status: 400,
   code: 'ERR_VALIDATION_FAILED',
   message: 'Some input data was failed on validation',
+  result: null
+}
+
+export const LyricsNotFoundError = {
+  status: 400,
+  code: 'ERR_LYRICS_NOT_FOUND',
+  message: 'Não foi possível encontrar a letra desse louvor',
   result: null
 }
 
@@ -130,10 +144,12 @@ const status = (code) => {
   const erros = [
     RouteNotFoundError,
     UserNotFoundError,
+    PraiseNotFoundError,
     PostNotFoundError,
     TagNotFoundError,
     RoleNotFoundError,
     ValidationFailedError,
+    LyricsNotFoundError,
     EmptyBodyRequestError,
     SqlDuplicatedEntryError,
     UnauthorizedError,

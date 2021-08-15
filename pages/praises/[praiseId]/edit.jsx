@@ -20,7 +20,8 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  FormControl
+  FormControl,
+  DialogContentText
 } from '@material-ui/core'
 
 import { Autocomplete } from '@material-ui/lab'
@@ -76,6 +77,7 @@ const praiseEmpty = {
 }
 
 export default function EditPraisePage() {
+  const [validation, setValidation] = useState({})
   const classes = useStyles()
   const router = useRouter()
   const api = useAPI()
@@ -103,12 +105,22 @@ export default function EditPraisePage() {
   async function handleFormSubmit(event){
     event.preventDefault();
 
-    if(praiseId)
-      await api.put(`praises/${praiseId}`, praise)
-    else
-      await api.post(`praises/`, praise)
-
-    router.push('/praises')
+    if(praiseId){
+      await api.put(`praises/${praiseId}`, praise).then(() => {
+        router.push('/praises')
+      })
+      .catch(({response}) => {
+        setValidation(response.data.validation)
+      })
+    }
+    else {
+      await api.post(`praises/`, praise).then(() => {
+        router.push('/praises')
+      })
+      .catch(({response}) => {
+        setValidation(response.data.validation)
+      })
+    }
   }
 
   return (
@@ -121,8 +133,8 @@ export default function EditPraisePage() {
       </AppBar>
 
       <Container className={classes.root}>
-        <form onSubmit={handleFormSubmit} className={classes.pageForm}>
-          <EditPraiseFields value={praise} onChange={(p) => setPraise(p)} />
+        <form onSubmit={handleFormSubmit} className={classes.pageForm} noValidate>
+          <EditPraiseFields value={praise} validation={validation} onChange={(p) => setPraise(p)} />
           <Button
             variant="contained"
             color="primary"
@@ -145,51 +157,97 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   const classes = useStyles()
   const api = useAPI()
 
+  const [validation, setValidation] = useState({})
+  const [dialogConfirmOpen, setDialogConfirmOpen] = useState(false)
+  const [dialogConfirmMessage, setDialogConfirmMessage] = useState(false)
+
   const [praise, setPraise] = useState(initialValue || praiseEmpty)
 
   useEffect(() => {
     setPraise(initialValue || praiseEmpty)
   }, [initialValue])
+  
+  function handleInflateDialogConfirm(message){
+    setDialogConfirmMessage(message)
+    setDialogConfirmOpen(true)
+  }
 
-  async function handleOnSubmit(event){
-    event.preventDefault();
+  function handleCloseDialogConfirm(){
+    setDialogConfirmOpen(false)
+  }
+
+  function handleSelectDialogConfirm(){
+    setDialogConfirmOpen(false)
+    handleOnSubmit(undefined, true)
+  }
+
+  async function handleOnSubmit(event, force = false){
+    if(event) event.preventDefault();
 
     if(praise.id){
       await api.put(`praises/${praise.id}`, praise).then(({ data }) => {
         if(typeof onSave === 'function')
           onSave(data.result)
       })
-      .catch(() => {})
+      .catch(({response}) => {
+        setValidation(response.data.validation)
+      })
     }
     else {
-      await api.post(`praises`, praise).then(({ data }) => {
+      await api.post(`praises/?force=${force}`, praise).then(({ data }) => {
         if(typeof onSave === 'function')
           onSave(data.result)
       })
-      .catch(() => {})
+      .catch(({response}) => {
+        switch(response.data.code){
+          case 'ERR_VALIDATION_FAILED':
+            setValidation(response.data.validation)
+            break
+          case 'ERR_LYRICS_NOT_FOUND':
+            handleInflateDialogConfirm(response.data.message)
+            break
+        }
+      })
     }
   }
 
   return (
     <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open}>
-      <DialogTitle id="simple-dialog-title">
+      <DialogTitle>
         { (praise.id ? 'Editar' : 'Nova sugestão de') + ' louvor' }
       </DialogTitle>
 
-      <form onSubmit={handleOnSubmit} className={classes.dialogForm}>
+      <form onSubmit={handleOnSubmit} className={classes.dialogForm} noValidate>
         <DialogContent>
-          <EditPraiseFields value={praise} onChange={(p) => setPraise(p)} />
+          <EditPraiseFields value={praise} validation={validation} onChange={(p) => setPraise(p)} />
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancelar</Button>
           <Button type="submit" color="primary">Salvar</Button>
         </DialogActions>
       </form>
+
+      <Dialog
+        open={dialogConfirmOpen}
+        onClose={handleCloseDialogConfirm}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Letra não encontrada</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">{dialogConfirmMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSelectDialogConfirm} color="primary" autoFocus>
+            Salvar mesmo assim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   )
 }
 
-function EditPraiseFields({ value, onChange }) {
+function EditPraiseFields({ value, validation, onChange }) {
   const classes = useStyles()
   
   const praiseTags = [
@@ -219,7 +277,9 @@ function EditPraiseFields({ value, onChange }) {
         label="Nome do louvor"
         value={value.name || ''}
         onChange={(e) => setValue({...value, name: e.target.value})}
-        />
+        disabled={typeof value.vagalume_id === 'string'}
+        error={typeof validation.name === 'string'}
+        helperText={validation.name}/>
       
       <TextField
         required
@@ -227,7 +287,9 @@ function EditPraiseFields({ value, onChange }) {
         label="Cantor / Grupo / Banda"
         value={value.artist || ''}
         onChange={(e) => setValue({...value, artist: e.target.value})}
-        />
+        disabled={typeof value.vagalume_id === 'string'}
+        error={typeof validation.artist === 'string'}
+        helperText={validation.artist}/>
 
       <div style={{display: 'flex', marginBottom: 16}}>
         <FormControl style={{flex: 1}}>

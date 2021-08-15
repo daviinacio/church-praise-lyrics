@@ -21,9 +21,6 @@ export default function MainPage() {
 
   useEffect(() => {
     router.push('/praises')
-    // api.post('auth/me')
-    //   .then(() => router.push('/schedule'))
-    //   .catch(() => router.push('/login'))
   }, [])
 
   return <>

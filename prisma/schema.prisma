@@ -20,7 +20,8 @@ model Users {
   updated_at      DateTime        @default(now())
 
   roles           Roles[]
-  sessions        Sessions[]
+  sessions        Sessions[]      @relation("user_sessions")
+  praises         Praises[]       @relation("user_praises")
 
   @@map("users")
 }
@@ -34,8 +35,8 @@ model Sessions {
   inactivated_at  DateTime?
   is_active       Boolean         @default(true)
 
-  user          Users           @relation(fields: [user_id], references: [id]) 
-  user_id       String
+  user_id         String
+  user            Users           @relation("user_sessions", fields: [user_id], references: [id])
 
   @@map("sessions")
 }
@@ -48,4 +49,63 @@ model Roles {
   users           Users[]
 
   @@map("roles")
+}
+
+model Artists {
+  id              String          @id @map("_id") @default(uuid())
+  name            String          @unique
+  vagalume_id     String?         @unique
+  created_at      DateTime        @default(now())
+
+  praises         Praises[]       @relation("artist_praises")
+
+  @@map("artists")
+}
+
+model Praises {
+  id              String          @id @map("_id") @default(uuid())
+  name            String
+  vagalume_id     String?         @unique()
+  tone            String          @default("?")
+  status          PraiseStatus
+  transpose       Int             @default(0)
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @default(now())
+
+  artist_id       String
+  artist          Artists         @relation("artist_praises", fields: [artist_id], references: [id])
+
+  suggested_by_id String?
+  suggested_by    Users?          @relation("user_praises", fields: [suggested_by_id], references: [id])
+
+  lyrics          Lyrics?         @relation("praises_lyrics")
+  tags            Tags[]          @relation("praises_tags")
+
+  @@unique([name, artist_id], name: "praises.name_unique")
+
+  @@map("praises")
+}
+
+model Lyrics {
+  id              String          @id @map("_id") @default(uuid())
+  content         String          @db.LongText()
+
+  praise_id       String?
+  praise          Praises?        @relation("praises_lyrics", fields: [praise_id], references: [id])
+
+  @@map("lyrics")
+}
+
+model Tags {
+  id              Int             @id @map("_id") @default(autoincrement())
+  label           String          @unique
+  praises         Praises[]       @relation("praises_tags")
+
+  @@map("tags")
+}
+
+enum PraiseStatus {
+  APPROVED
+  REHEARSING
+  SUGGESTION
 }

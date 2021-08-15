@@ -36,21 +36,21 @@ export const withSnackbar = WrappedComponent => {
           variant={ severity === 'error' ? "snackbar" : "snackbar-error"}
           onClick={handleClose}
           open={open}>
-          <Snackbar
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right"
-            }}
-            autoHideDuration={duration}
-            open={open}
-            onClose={handleClose}
-            TransitionComponent={Slide}
-          >
-            <Alert variant="filled" onClose={handleClose} severity={severity}>
-              {message}
-            </Alert>
-          </Snackbar>
         </Backdrop>
+
+        <Snackbar
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right"
+          }}
+          autoHideDuration={duration}
+          open={open}
+          onClose={handleClose}
+          TransitionComponent={Slide}>
+          <Alert variant="filled" onClose={handleClose} severity={severity}>
+            {message}
+          </Alert>
+        </Snackbar>
       </>
     );
   };

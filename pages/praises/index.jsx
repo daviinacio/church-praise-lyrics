@@ -30,6 +30,7 @@ import {
 import {EditPraiseDialog} from './[praiseId]/edit'
 import { useAPI } from '../../services/api'
 import { useAuth } from '../../src/auth'
+import { PraiseStatus } from '@prisma/client'
 
 const editWithDialog = true
 
@@ -88,7 +89,8 @@ export default function PraisesPage() {
 
     await api.put(`praises/${praiseId}`, {
       status: newStatus
-    }).then(() => {
+    })
+    .then(() => {
       setPraises(praises.map(praise => {
         if(praise.id === praiseId)
           praise.status = newStatus
@@ -157,7 +159,8 @@ export default function PraisesPage() {
 
   useEffect(async () => {
     await api.get('praises').then(({data}) => {
-      setPraises(data)
+      const { result } = data
+      setPraises(result)
       setIsLoading(false)
     })
     .catch(() => {})
@@ -190,7 +193,7 @@ export default function PraisesPage() {
         className={classes.content}
         onChangeIndex={(index) => handleChangeTab(undefined, index)}>
           
-          { ['approved', 'training', 'suggestion'].map((tabId, index) => (
+          { Object.keys(PraiseStatus).map((tabId, index) => (
             <TabPanel value={tab} index={index} showAll={false} key={tabId}>
               { praises.filter(item => item.status === tabId).map((item) => (
                 <Card variant="outlined" key={item.id} className={classes.card}>
@@ -373,12 +376,12 @@ export default function PraisesPage() {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}>
 
-        { anchorData.status === 'suggestion' && (
-          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, 'training')}>Ensaiar</MenuItem>
+        { anchorData.status === PraiseStatus.SUGGESTION && (
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.REHEARSING)}>Ensaiar</MenuItem>
         )}
 
-        { anchorData.status === 'training' && (
-          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, 'approved')}>Aprovar</MenuItem>
+        { anchorData.status === PraiseStatus.REHEARSING && (
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.APPROVED)}>Aprovar</MenuItem>
         )}
 
         <MenuItem onClick={() => handleMenuEdit(anchorData)}>Editar</MenuItem>

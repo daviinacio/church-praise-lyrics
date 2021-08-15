@@ -44,19 +44,16 @@ export const login = async (req, res) => {
       }
       else throw {
         ...ValidationFailedError,
-        validation: [
-          {
-            field: "password",
-            message: "A senha informada está incorreta"
-          }
-        ]
+        validation: {
+          password: "A senha informada está incorreta"
+        }
       }
     }
     else throw {
       ...ValidationFailedError,
-      validation: [
-        { field: "email", message: "Membro não encontrado" }
-      ]
+      validation: {
+        email: "Membro não encontrado"
+      }
     }
   }
   catch(ex){

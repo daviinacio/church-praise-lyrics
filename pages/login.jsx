@@ -90,13 +90,7 @@ export default function LoginPage() {
       router.push('/')
     })
     .catch(({response}) => {
-      const validation = Object.fromEntries(
-        response.data.validation.map(e => [
-          e.field, e.message
-        ])
-      )
-      
-      setValidation(validation)
+      setValidation(response.data.validation)
     })
   }
 

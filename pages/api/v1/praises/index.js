@@ -1,9 +1,14 @@
-import RouteNotFound from "../../404";
+import RouteNotFound from "../../404"
 import { sleep, uuid } from "../../../../src/dev";
 import Middleware from '../../../../middlewares/CoreMiddleware'
+import { PrismaClient } from "@prisma/client"
+import errors, { LyricsNotFoundError, PraiseNotFoundError, SqlDuplicatedEntryError, ValidationFailedError } from "../../../../src/errors"
+import vagalume from '../../../../services/vagalume'
+
+const prisma = new PrismaClient()
 
 const handler = async (req, res) => {
-  switch(req.method.trim().toUpperCase()){
+  switch (req.method.trim().toUpperCase()) {
     case 'GET': return await index(req, res)
     case 'POST': return await store(req, res)
 
@@ -13,155 +18,347 @@ const handler = async (req, res) => {
 };
 
 export const index = Middleware(['auth:anonymous'], async (req, res) => {
-  const { praiseId } = req.query
+  try {
+    const { praiseId } = req.query
 
-  const praises = []
+    if (praiseId) {
+      const praise = await prisma.praises.findFirst({
+        where: { id: praiseId },
+        include: {
+          artist: {
+            select: {
+              name: true
+            }
+          },
+          tags: {
+            select: {
+              label: true
+            }
+          },
+          suggested_by: {
+            select: {
+              name: true,
+              username: true,
+              avatar_url: true
+            }
+          },
+          lyrics: {
+            select: {
+              content: true
+            }
+          }
+        }
+      })
 
-  for (var i = 0; i < 2; i++){
-    praises.push({
-      id: "a08fa75f-0c64-46d7-be49-6e63b631e19" + i,
-      name: `Projeto no Deserto (0${i})`,
-      artist: "Voz da Verdade",
-      tags: [
-        "adoração", "oferta", "apelo"
-      ],
-      status: 'approved',
-      tone: 'C',
-      transpose: 0,
-      created_by: {
-        name: "Davi Inácio",
-        avatar_url: "https://avatars.githubusercontent.com/u/19656901?v=4"
-      },
-      created_at: "2021/07/07"
-    })
+      if (praise) {
+        praise.artist = praise.artist.name
+        praise.tags = praise.tags.map(tag => (tag.label))
 
-    praises.push({
-      id: "b08fa75f-0c64-46d7-be49-6e63b631e19" + i,
-      name: `Projeto no Deserto (1${i})`,
-      artist: "Voz da Verdade",
-      tags: [
-        "adoração", "oferta"
-      ],
-      status: 'training',
-      tone: 'C#',
-      transpose: 0,
-      created_by: {
-        name: "Davi Inácio",
-        avatar_url: "https://avatars.githubusercontent.com/u/19656901?v=4"
-      },
-      created_at: "2021/07/07"
-    })
-
-    praises.push({
-      id: "c08fa75f-0c64-46d7-be49-6e63b631e19" + i,
-      name: `Projeto no Deserto (2${i})`,
-      artist: "Voz da Verdade",
-      tags: [
-        "adoração", "oferta"
-      ],
-      status: 'suggestion',
-      tone: 'Bb',
-      transpose: 0,
-      created_by: {
-        name: "Davi Inácio",
-        avatar_url: "https://avatars.githubusercontent.com/u/19656901?v=4"
-      },
-      created_at: "2021/07/07"
-    })
-
-    praises.push({
-      id: "c08fa75f-0c64-46d7-be49-6e63s631e19" + i,
-      name: `Projeto no Deserto (3${i})`,
-      artist: "Voz da Verdade",
-      tags: [
-        "adoração", "oferta"
-      ],
-      status: 'suggestion',
-      tone: 'Cm',
-      transpose: 0,
-      created_by: {
-        name: "Davi Inácio Ciconelli Vieira",
-        avatar_url: null
-      },
-      created_at: "2021/07/07"
-    })
-  }
-
-  // Fake ping mock
-  //if(process.env.NODE_ENV === 'development')
-  //  await sleep(1000)
-
-  if(praiseId){
-    const praise = praises.filter(praise => praise.id == praiseId)
-
-    if(praise.length > 0){
-      return res.status(200).json(praise[0])
+        return res.status(200).json({
+          status: 200,
+          result: praise
+        })
+      } else throw PraiseNotFoundError
     }
     else {
-      return res.status(400).json({
-        message: 'Prase not found'
+      const count = await prisma.praises.count()
+      const praises = await prisma.praises.findMany({
+        include: {
+          artist: {
+            select: {
+              name: true
+            }
+          },
+          tags: {
+            select: {
+              label: true
+            }
+          },
+          suggested_by: {
+            select: {
+              name: true,
+              username: true,
+              avatar_url: true
+            }
+          }
+        }
+      })
+
+      praises.forEach((value, index) => {
+        praises[index].artist = praises[index].artist.name
+        praises[index].tags = praises[index].tags.map(tag => (tag.label))
+      })
+
+      res.setHeader('X-Total-Count', count)
+      return res.status(200).json({
+        status: 200,
+        total_count: count,
+        result: praises,
       })
     }
   }
-  else return res.status(200).json(praises)
+  catch (ex) {
+    return res.status(errors.status(ex.code)).json(ex)
+  }
 })
 
-export const store = Middleware(['auth'], async (req, res) => {
-  const praise = {
-    ...{
-      status: 'suggestion',
-      name: 'Teste',
-      artist: 'Teste',
-      created_by: {
-        "name": "Davi Inácio"
+export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
+  try {
+    const { name: praise_name, tone, transpose, artist: artist_name, tags = [] } = req.body
+    const { force } = req.query
+
+    const validation = {}
+
+    if(typeof praise_name !== 'string' || praise_name === '')
+      validation.name = "Informe o nome do louvor"
+
+    if(typeof artist_name !== 'string' || artist_name === '')
+      validation.artist = "Informe o nome do(a) cantor(a)"
+
+    if(Object.keys(validation).length > 0) throw {
+      ...ValidationFailedError, validation
+    }
+
+    const vagalume_result = await vagalume.get('search.php', {
+      params: {
+        art: artist_name.trim(),
+        mus: praise_name.trim()
+      }
+    })
+    .then(({ data }) => {
+      if(data.mus || force === 'true') return {
+        artist: data.art || {},
+        music: (data.mus || [])[0] || {}
+      }
+      else throw LyricsNotFoundError
+    })
+
+    const artist = await prisma.artists.upsert({
+      create: {
+        name: vagalume_result.artist.name || artist_name.trim(),
+        vagalume_id: vagalume_result.artist.id
       },
-      tone: '?',
-      transpose: 0
-    },
-    ...req.body,
-    id: uuid()
+      update: { 
+        name: vagalume_result.artist.name || artist_name.trim(),
+        vagalume_id: vagalume_result.artist.id
+      },
+      where: {
+        name: vagalume_result.artist.name || artist_name.trim()
+      }
+    })
+
+    console.log(vagalume_result)
+
+    const praise = await prisma.praises.create({
+      data: {
+        name: vagalume_result.music.name || praise_name.trim(),
+        vagalume_id: vagalume_result.music.id,
+        artist: {
+          connect: {
+            id: artist.id
+          }
+        },
+        ...user.id && {
+          suggested_by: {
+            connect: {
+              id: user.id
+            }
+          }
+        },
+        status: "SUGGESTION",
+        transpose,
+        tone,
+        ...vagalume_result.music.text && {
+          lyrics: {
+            create: {
+              content: vagalume_result.music.text
+            }
+          }
+        },
+        tags: {
+          connectOrCreate: tags.map((tag) => ({
+            create: { label: tag.trim() },
+            where: { label: tag.trim() }
+          }))
+        }
+      },
+      include: {
+        artist: {
+          select: {
+            name: true
+          }
+        },
+        tags: {
+          select: {
+            label: true
+          }
+        },
+        suggested_by: {
+          select: {
+            name: true,
+            username: true,
+            avatar_url: true
+          }
+        },
+        lyrics: {
+          select: {
+            content: true
+          }
+        }
+      }
+    })
+    .catch(err => {
+      if(err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0){
+        const field = err.meta.target.split("_")[0]
+        throw {
+          ...ValidationFailedError,
+          validation: Object.fromEntries([[
+            field !== 'vagalume' ? field : 'name',
+            "Esse louvor já foi adicionado"
+          ]])
+        };
+      } else throw err
+    })
+
+    console.log(praise)
+
+    praise.artist = praise.artist.name
+    praise.tags = praise.tags.map(tag => (tag.label))
+
+    return res.status(200).json({
+      status: 200,
+      result: praise
+    })
   }
-
-  // Fake ping mock
-  //if(process.env.NODE_ENV === 'development')
-  //  await sleep(1000)
-
-  console.log('praise.store: ', praise)
-  return res.status(200).json(praise)
+  catch (ex) {
+    return res.status(errors.status(ex.code)).json(ex)
+  }
 })
 
 export const update = Middleware(['auth'], async (req, res) => {
-  const { praiseId } = req.query
-  const { status, name } = req.body
+  try {
+    const { name: praise_name, tone, transpose, artist: artist_name, tags = [] } = req.body
+    const { praiseId } = req.query
 
-  if(name){
-    console.log(`praise.update ${praiseId}: `, req.body)
+    const validation = {}
+
+    if(typeof praise_name === 'string' && praise_name === '')
+      validation.name = "Informe o nome do louvor"
+
+    if(typeof artist_name === 'string' && artist_name === '')
+      validation.artist = "Informe o nome do(a) cantor(a)"
+
+    if(Object.keys(validation).length > 0) throw {
+      ...ValidationFailedError, validation
+    }
+    
+    tags.map(async (tag) => {
+      await prisma.tags.upsert({
+        create: { label: tag.trim() },
+        update: { label: tag.trim() },
+        where: { label: tag.trim() }
+      })
+    })
+
+    const target = await prisma.praises.count({
+      where: { id: praiseId }
+    })
+
+    if(!target)
+      throw PraiseNotFoundError
+
+    const praise = await prisma.praises.update({
+      where: {
+        id: praiseId
+      },
+      data: {
+        name: praise_name,
+        tone: tone, 
+        transpose: transpose,
+        ...artist_name && {
+          artist: {
+            update: {
+              name: artist_name
+            }
+          },
+        },
+        tags: {
+          set: tags.map((tag) => ({
+            label: tag.trim()
+          })),
+        }
+      },
+      include: {
+        artist: {
+          select: {
+            name: true
+          }
+        },
+        tags: {
+          select: {
+            label: true
+          }
+        },
+        suggested_by: {
+          select: {
+            name: true,
+            username: true,
+            avatar_url: true
+          }
+        }
+      }
+    })
+    .catch((err) => {
+      // if(err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0){
+      //   const field = err.meta.target.split("_")[0]
+      //   throw {
+      //     ...ValidationFailedError,
+      //     validation: Object.fromEntries([[
+      //       field !== 'vagalume' ? field : 'name',
+      //       "Esse louvor já foi adicionado"
+      //     ]])
+      //   };
+      // }
+      // else
+      if(err.code === 'P2025'){
+        throw PraiseNotFoundError
+      } else throw err
+    })
+
+    praise.artist = praise.artist.name
+    praise.tags = praise.tags.map(tag => (tag.label))
+    
+    return res.status(200).json({
+      status: 200,
+      result: praise
+    })
   }
-  else {
-    console.log(`praise.update ${praiseId}: status -> ${status}`)
+  catch (ex) {
+    return res.status(errors.status(ex.code)).json(ex)
   }
-
-  // Fake ping mock
-  //if(process.env.NODE_ENV === 'development')
-  //  await sleep(1000)
-
-  return res.status(200).json({
-    message: "praise.update"
-  })
 })
 
 export const destroy = Middleware(['auth'], async (req, res) => {
   const { praiseId } = req.query
 
-  console.log(`praise.destroy ${praiseId}`)
+  try {
+    const praise = await prisma.praises.delete({
+      where: {
+        id: praiseId
+      }
+    })
+    .catch((err) => {
+      if(err.code === 'P2025')
+        throw PraiseNotFoundError
+    })
 
-  // Fake ping mock
-  //if(process.env.NODE_ENV === 'development')
-  //  await sleep(1000)
-
-  return res.status(200).json({
-    message: "praise.destroy"
-  })
+    return res.status(200).json({
+      message: `Praise "${praise.name}" was deletes`,
+    })
+  }
+  catch (ex) {
+    return res.status(errors.status(ex.code)).json(ex)
+  }
 })
 
 export default handler;
