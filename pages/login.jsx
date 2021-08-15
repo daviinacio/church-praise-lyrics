@@ -99,7 +99,7 @@ export default function LoginPage() {
       <SEO title="Login" />
 
       <form className={classes.root} onSubmit={(e) => handleSubmit(e)} noValidate>
-        <Paper elevation={5} className={classes.paper}>
+        <Paper elevation={0} className={classes.paper}>
           <Container className={classes.logoContainer}>
             <Image
               src={"/logo.png"}
@@ -145,7 +145,7 @@ export default function LoginPage() {
                 variant="contained"
                 color="primary"
                 type="submit">
-                  Logar
+                  Entrar
               </Button>
             </Grid>
           </Grid>

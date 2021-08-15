@@ -1,7 +1,7 @@
 import RouteNotFound from "../../404"
 import { sleep, uuid } from "../../../../src/dev";
 import Middleware from '../../../../middlewares/CoreMiddleware'
-import { PrismaClient } from "@prisma/client"
+import { PraiseStatus, PrismaClient } from "@prisma/client"
 import errors, { LyricsNotFoundError, PraiseNotFoundError, SqlDuplicatedEntryError, ValidationFailedError } from "../../../../src/errors"
 import vagalume from '../../../../services/vagalume'
 
@@ -147,7 +147,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
       }
     })
 
-    console.log(vagalume_result)
+    console.log("[api.Praises.store]::vagalume_result", vagalume_result)
 
     const praise = await prisma.praises.create({
       data: {
@@ -220,7 +220,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
       } else throw err
     })
 
-    console.log(praise)
+    console.log("[api.Praises.store]::praise", praise)
 
     praise.artist = praise.artist.name
     praise.tags = praise.tags.map(tag => (tag.label))
@@ -237,7 +237,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
 
 export const update = Middleware(['auth'], async (req, res) => {
   try {
-    const { name: praise_name, tone, transpose, artist: artist_name, tags = [] } = req.body
+    const { name: praise_name, tone, transpose, artist: artist_name, tags = [], status = PraiseStatus.SUGGESTION } = req.body
     const { praiseId } = req.query
 
     const validation = {}
@@ -275,6 +275,7 @@ export const update = Middleware(['auth'], async (req, res) => {
         name: praise_name,
         tone: tone, 
         transpose: transpose,
+        status: status,
         ...artist_name && {
           artist: {
             update: {
@@ -339,9 +340,9 @@ export const update = Middleware(['auth'], async (req, res) => {
 })
 
 export const destroy = Middleware(['auth'], async (req, res) => {
-  const { praiseId } = req.query
-
   try {
+    const { praiseId } = req.query
+
     const praise = await prisma.praises.delete({
       where: {
         id: praiseId
@@ -353,6 +354,7 @@ export const destroy = Middleware(['auth'], async (req, res) => {
     })
 
     return res.status(200).json({
+      status: 200,
       message: `Praise "${praise.name}" was deletes`,
     })
   }

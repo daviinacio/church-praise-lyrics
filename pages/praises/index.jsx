@@ -10,6 +10,7 @@ import {
   Avatar,
   Backdrop,
   Card,
+  CardActionArea,
   CardHeader,
   CircularProgress,
   Fab,
@@ -27,7 +28,7 @@ import {
   Add as AddIcon
 } from '@material-ui/icons'
 
-import {EditPraiseDialog} from './[praiseId]/edit'
+import { EditPraiseDialog } from './[praiseId]/edit'
 import { useAPI } from '../../services/api'
 import { useAuth } from '../../src/auth'
 import { PraiseStatus } from '@prisma/client'
@@ -57,11 +58,15 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function PraisesPage() {
+export default function PraisesListPage() {
   const classes = useStyles()
   const router = useRouter()
   const auth = useAuth()
   const api = useAPI()
+
+  function handleShowPraiseDetails(praiseId) {
+    router.push(`/praises/${praiseId}`)
+  }
 
   // Tabs
   const [tab, setTab] = useState(2)
@@ -70,7 +75,7 @@ export default function PraisesPage() {
     setTab(parseInt(sessionStorage.getItem('praises.tab')) || 0)
   }, [])
 
-  function handleChangeTab(event, newTab){
+  function handleChangeTab(event, newTab) {
     setTab(newTab)
     sessionStorage.setItem('praises.tab', newTab)
   }
@@ -79,29 +84,29 @@ export default function PraisesPage() {
   const [anchorEl, setAnchorEl] = useState(null)
   const [anchorData, setAnchorData] = useState({ id: '' })
 
-  function handleMenuInflate(event, data){
+  function handleMenuInflate(event, data) {
     setAnchorData(data)
     setAnchorEl(event.currentTarget)
   }
 
-  async function handleMenuChangeStatus(praiseId, newStatus){
+  async function handleMenuChangeStatus(praiseId, newStatus) {
     handleMenuClose()
 
     await api.put(`praises/${praiseId}`, {
       status: newStatus
     })
-    .then(() => {
-      setPraises(praises.map(praise => {
-        if(praise.id === praiseId)
-          praise.status = newStatus
-        return praise
-      }))
-    })
-    .catch(() => {})
+      .then(() => {
+        setPraises(praises.map(praise => {
+          if (praise.id === praiseId)
+            praise.status = newStatus
+          return praise
+        }))
+      })
+      .catch(() => { })
   }
 
-  function handleMenuEdit(data){
-    if(editWithDialog){
+  function handleMenuEdit(data) {
+    if (editWithDialog) {
       handleDialogEditorInflate(data)
       handleMenuClose()
     }
@@ -109,7 +114,7 @@ export default function PraisesPage() {
       router.push(`/praises/${data.id}/edit`)
   }
 
-  async function handleMenuRemove(praiseId){
+  async function handleMenuRemove(praiseId) {
     handleMenuClose()
 
     await api.delete(`praises/${praiseId}`).then(() => {
@@ -117,10 +122,10 @@ export default function PraisesPage() {
         return praise.id !== praiseId
       }))
     })
-    .catch(() => {})
+      .catch(() => { })
   }
 
-  function handleMenuClose(){
+  function handleMenuClose() {
     setAnchorEl(null)
     setTimeout(() => setAnchorData({ id: '' }), 250)
   }
@@ -129,17 +134,17 @@ export default function PraisesPage() {
   const [dialogEditorOpen, setDialogEditorOpen] = useState(false)
   const [dialogEditorData, setDialogEditorData] = useState({})
 
-  function handleDialogEditorInflate(data){
+  function handleDialogEditorInflate(data) {
     setDialogEditorData(data)
     setDialogEditorOpen(true)
   }
 
-  function handleDialogEditorSave(data){
+  function handleDialogEditorSave(data) {
     handleDialogEditorClose()
 
-    if(praises.some(e => e.id === data.id)){
+    if (praises.some(e => e.id === data.id)) {
       setPraises(praises.map(praise => {
-        if(praise.id === data.id)
+        if (praise.id === data.id)
           praise = data
         return praise
       }))
@@ -147,9 +152,11 @@ export default function PraisesPage() {
     else {
       setPraises([...praises, data])
     }
+
+    setDialogEditorData({})
   }
 
-  function handleDialogEditorClose(){
+  function handleDialogEditorClose() {
     setDialogEditorOpen(false)
   }
 
@@ -158,12 +165,12 @@ export default function PraisesPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(async () => {
-    await api.get('praises').then(({data}) => {
+    await api.get('praises').then(({ data }) => {
       const { result } = data
       setPraises(result)
       setIsLoading(false)
     })
-    .catch(() => {})
+      .catch(() => { })
   }, [])
 
   return (
@@ -192,45 +199,56 @@ export default function PraisesPage() {
         index={tab}
         className={classes.content}
         onChangeIndex={(index) => handleChangeTab(undefined, index)}>
-          
-          { Object.keys(PraiseStatus).map((tabId, index) => (
-            <TabPanel value={tab} index={index} showAll={false} key={tabId}>
-              { praises.filter(item => item.status === tabId).map((item) => (
-                <Card variant="outlined" key={item.id} className={classes.card}>
+
+        {Object.keys(PraiseStatus).map((tabId, index) => (
+          <TabPanel value={tab} index={index} showAll={false} key={tabId}>
+            {praises.filter(item => item.status === tabId).map((item) => (
+              <Card variant="outlined" key={item.id} className={classes.card}>
+                <CardActionArea>
                   <CardHeader
-                  avatar={
-                    <Avatar alt={item.tone} className={classes.tone}>{ item.tone }</Avatar>
-                  }
+                    avatar={
+                      <Avatar
+                        alt={item.tone}
+                        className={classes.tone}
+                        onClick={() => handleShowPraiseDetails(item.id)}>
+                          {item.tone}
+                        </Avatar>
+                    }
+                    title={
+                      <span onClick={() => handleShowPraiseDetails(item.id)}>{item.name}</span>
+                    }
+                    subheader={
+                      <span onClick={() => handleShowPraiseDetails(item.id)}>{item.artist}</span>
+                    }
+
                     // avatar={
                     //   <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
                     //     { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
                     //   </Avatar>
                     // }
-                    action={ auth.isAuthenticated() &&
+                    action={auth.isAuthenticated() &&
                       <IconButton
                         aria-label="settings"
                         onClick={(event) => { handleMenuInflate(event, item) }}>
                         <MoreVertIcon />
                       </IconButton>
                     }
-
-                    title={item.name}
-                    subheader={item.artist}
                   />
-                </Card>
-              )) }
+                </CardActionArea>
+              </Card>
+            ))}
 
-              { praises.filter(item => item.status === tabId).length === 0 && !isLoading && (
-                <Typography>
-                  { [
-                    "Não há louvores aprovados",
-                    "Não há louvores a serem ensaiados",
-                    "Nenhuma sugestão encontrada"
-                  ][index] }
-                </Typography>
-              ) }
-            </TabPanel>
-          )) }
+            {praises.filter(item => item.status === tabId).length === 0 && !isLoading && (
+              <Typography>
+                {[
+                  "Não há louvores aprovados",
+                  "Não há louvores a serem ensaiados",
+                  "Nenhuma sugestão encontrada"
+                ][index]}
+              </Typography>
+            )}
+          </TabPanel>
+        ))}
 
         {/* <TabPanel value={tab} index={0}>
           { praises.filter(item => item.status === 'approved').map((item) => (
@@ -361,7 +379,7 @@ export default function PraisesPage() {
         aria-label="add"
         className={classes.fab}
         onClick={() => {
-          if(editWithDialog)
+          if (editWithDialog)
             handleDialogEditorInflate(undefined)
           else
             router.push('/praises/new')
@@ -376,19 +394,19 @@ export default function PraisesPage() {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}>
 
-        { anchorData.status === PraiseStatus.SUGGESTION && (
+        {anchorData.status === PraiseStatus.SUGGESTION && (
           <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.REHEARSING)}>Ensaiar</MenuItem>
         )}
 
-        { anchorData.status === PraiseStatus.REHEARSING && (
+        {anchorData.status === PraiseStatus.REHEARSING && (
           <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.APPROVED)}>Aprovar</MenuItem>
         )}
 
         <MenuItem onClick={() => handleMenuEdit(anchorData)}>Editar</MenuItem>
-        
+
         <MenuItem onClick={() => { handleMenuRemove(anchorData.id) }}>Remover</MenuItem>
       </Menu>
-      
+
       <Backdrop variant="loading" open={isLoading}>
         <CircularProgress color={"primary"} />
       </Backdrop>
