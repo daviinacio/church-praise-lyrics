@@ -1,18 +1,22 @@
 import { PrismaClient } from "@prisma/client"
 import { sign, verify } from "jsonwebtoken"
-import { AuthTokenExpiredError, AuthTokenInvalidError, UnauthorizedError } from "../src/errors"
-
 const prisma = new PrismaClient
+
+import {
+  InvalidTokenError,
+  UnauthorizedError,
+  ExpiredTokenError
+} from '../src/errors'
 
 export const getAuthUser = async (authorization, options) => {
   if(!authorization){
     if(options.indexOf("anonymous") === -1)
-      throw UnauthorizedError
+      throw new UnauthorizedError()
     else return {}
   }
 
   if(authorization.split(' ').length < 2)
-    throw AuthTokenInvalidError
+    throw new InvalidTokenError()
 
   const type = authorization.split(' ')[0].trim()
   const token = authorization.split(' ')[1].trim()
@@ -21,7 +25,7 @@ export const getAuthUser = async (authorization, options) => {
     const decoded = verify(token, process.env.JWT_SECRET || '')
 
     if(!decoded.user)
-      throw AuthTokenInvalidError;
+      throw new InvalidTokenError();
 
     const userWithSessions = await prisma.users.findFirst({
       where: {
@@ -47,16 +51,16 @@ export const getAuthUser = async (authorization, options) => {
         userWithSessions.sessions = undefined
 
         return userWithSessions
-      } else throw AuthTokenExpiredError 
-    } else throw AuthTokenInvalidError 
+      } else throw new ExpiredTokenError()
+    } else throw new InvalidTokenError()
   }
   catch(err){
     if((err.name || err.code) && err.name !== 'JsonWebTokenError')
       await killSession(authorization, true);
 
     throw {
-      'TokenExpiredError': AuthTokenExpiredError,
-      'JsonWebTokenError': AuthTokenInvalidError,
+      'TokenExpiredError': new ExpiredTokenError(),
+      'JsonWebTokenError': new InvalidTokenError(),
     } [err.name] || err;
   }
 }
@@ -89,7 +93,7 @@ export const createSession = async (user, keep) => {
 
 export const killSession = async (authorization, suppressNotFound = false) => {
   if(authorization.split(' ').length < 2)
-    throw AuthTokenInvalidError
+    throw new InvalidTokenError()
 
   const type = authorization.split(' ')[0].trim()
   const token = authorization.split(' ')[1].trim()
@@ -108,6 +112,6 @@ export const killSession = async (authorization, suppressNotFound = false) => {
     })
   else {
     if(suppressNotFound) return;
-    else throw AuthTokenInvalidError
+    else throw new InvalidTokenError()
   }
 }

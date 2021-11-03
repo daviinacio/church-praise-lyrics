@@ -39,12 +39,12 @@ export const useAPI = ({suppressAutoRedirect} = {}) => {
 
         switch(code){
           // Ignored errors
-          case 'ERR_LYRICS_NOT_FOUND':
+          case 'ERR_CONTENT_NOT_FOUND':
           case 'ERR_VALIDATION_FAILED': break;
 
           // Authentication errors
-          case 'ERR_AUTH_TOKEN_EXPIRED':
-          case 'ERR_AUTH_TOKEN_INVALID':
+          case 'ERR_EXPIRED_TOKEN':
+          case 'ERR_INVALID_TOKEN':
             auth.clearCredentials()
             if(!suppressAutoRedirect)
               router.push('/member')

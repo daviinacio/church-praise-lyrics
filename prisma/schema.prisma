@@ -81,7 +81,7 @@ model Praises {
   lyrics          Lyrics?         @relation("praises_lyrics")
   tags            Tags[]          @relation("praises_tags")
 
-  @@unique([name, artist_id], name: "praises.name_unique")
+  @@unique([name, artist_id], name: "praises_name_unique")
 
   @@map("praises")
 }

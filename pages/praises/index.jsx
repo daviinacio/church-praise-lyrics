@@ -32,6 +32,7 @@ import { EditPraiseDialog } from './[praiseId]/edit'
 import { useAPI } from '../../services/api'
 import { useAuth } from '../../src/auth'
 import { PraiseStatus } from '@prisma/client'
+import ContentError from '../../components/ContentError'
 
 const editWithDialog = true
 
@@ -55,6 +56,11 @@ const useStyles = makeStyles((theme) => ({
   },
   tone: {
     backgroundColor: theme.palette.primary.dark
+  },
+  cardItem: {
+    '&:disabled': {
+      background: 'grey'
+    }
   }
 }))
 
@@ -95,14 +101,14 @@ export default function PraisesListPage() {
     await api.put(`praises/${praiseId}`, {
       status: newStatus
     })
-      .then(() => {
-        setPraises(praises.map(praise => {
-          if (praise.id === praiseId)
-            praise.status = newStatus
-          return praise
-        }))
-      })
-      .catch(() => { })
+    .then(() => {
+      setPraises(praises.map(praise => {
+        if (praise.id === praiseId)
+          praise.status = newStatus
+        return praise
+      }))
+    })
+    .catch(() => { })
   }
 
   function handleMenuEdit(data) {
@@ -150,7 +156,14 @@ export default function PraisesListPage() {
       }))
     }
     else {
-      setPraises([...praises, data])
+      setPraises([...praises, {
+        ...data,
+        loadingLyricsPage: true
+      }])
+
+      fetch(`/praises/${data.id}`).then(() => {
+        setPraises([...praises, data])
+      })
     }
 
     setDialogEditorData({})
@@ -163,14 +176,19 @@ export default function PraisesListPage() {
   // Content data
   const [praises, setPraises] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hadError, setHadError] = useState(false)
 
   useEffect(async () => {
     await api.get('praises').then(({ data }) => {
       const { result } = data
       setPraises(result)
       setIsLoading(false)
+      setHadError(false)
     })
-      .catch(() => { })
+    .catch((error) => {
+      setIsLoading(false)
+      setHadError(true)
+    })
   }, [])
 
   return (
@@ -194,162 +212,64 @@ export default function PraisesListPage() {
         </Tabs>
       </AppBar>
 
-      <SwipeableViews
-        axis={'x'}
-        index={tab}
-        className={classes.content}
-        onChangeIndex={(index) => handleChangeTab(undefined, index)}>
+      { !hadError ? (
+        <SwipeableViews
+          axis={'x'}
+          index={tab}
+          className={classes.content}
+          onChangeIndex={(index) => handleChangeTab(undefined, index)}>
 
-        {Object.keys(PraiseStatus).map((tabId, index) => (
-          <TabPanel value={tab} index={index} showAll={false} key={tabId}>
-            {praises.filter(item => item.status === tabId).map((item) => (
-              <Card variant="outlined" key={item.id} className={classes.card}>
-                <CardActionArea>
-                  <CardHeader
-                    avatar={
-                      <Avatar
-                        alt={item.tone}
-                        className={classes.tone}
-                        onClick={() => handleShowPraiseDetails(item.id)}>
-                          {item.tone}
-                        </Avatar>
-                    }
-                    title={
-                      <span onClick={() => handleShowPraiseDetails(item.id)}>{item.name}</span>
-                    }
-                    subheader={
-                      <span onClick={() => handleShowPraiseDetails(item.id)}>{item.artist}</span>
-                    }
+          {Object.keys(PraiseStatus).map((tabId, index) => (
+            <TabPanel value={tab} index={index} showAll={false} key={tabId}>
+              {praises.filter(item => item.status === tabId).map((item) => (
+                <Card variant="outlined" key={item.id} className={classes.card}>
+                  <CardActionArea className={classes.cardItem} disabled={item.loadingLyricsPage === true}>
+                    <CardHeader
+                      avatar={
+                        <Avatar
+                          alt={item.tone}
+                          className={classes.tone}
+                          onClick={() => handleShowPraiseDetails(item.id)}>
+                            {item.tone}
+                          </Avatar>
+                      }
+                      title={
+                        <span onClick={() => handleShowPraiseDetails(item.id)}>{item.name}</span>
+                      }
+                      subheader={
+                        <span onClick={() => handleShowPraiseDetails(item.id)}>{item.artist}</span>
+                      }
 
-                    // avatar={
-                    //   <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
-                    //     { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
-                    //   </Avatar>
-                    // }
-                    action={auth.isAuthenticated() &&
-                      <IconButton
-                        aria-label="settings"
-                        onClick={(event) => { handleMenuInflate(event, item) }}>
-                        <MoreVertIcon />
-                      </IconButton>
-                    }
-                  />
-                </CardActionArea>
-              </Card>
-            ))}
+                      // avatar={
+                      //   <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
+                      //     { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
+                      //   </Avatar>
+                      // }
+                      action={auth.isAuthenticated() &&
+                        <IconButton
+                          aria-label="settings"
+                          onClick={(event) => { handleMenuInflate(event, item) }}>
+                          <MoreVertIcon />
+                        </IconButton>
+                      }
+                    />
+                  </CardActionArea>
+                </Card>
+              ))}
 
-            {praises.filter(item => item.status === tabId).length === 0 && !isLoading && (
-              <Typography>
-                {[
-                  "Não há louvores aprovados",
-                  "Não há louvores a serem ensaiados",
-                  "Nenhuma sugestão encontrada"
-                ][index]}
-              </Typography>
-            )}
-          </TabPanel>
-        ))}
-
-        {/* <TabPanel value={tab} index={0}>
-          { praises.filter(item => item.status === 'approved').map((item) => (
-            <Typography key={item.id}>Item: {item.name}</Typography>
-          )) }
-
-          { praises.filter(item => item.status === 'approved').length === 0 && !isLoading && (
-            <Typography>
-              Não há louvores aprovados
-            </Typography>
-          ) }
-        </TabPanel>
-
-        <TabPanel value={tab} index={1}>
-          { praises.filter(item => item.status === 'training').map((item) => (
-            <Typography key={item.id}>Item: {item.name}</Typography>
-          )) }
-
-          { praises.filter(item => item.status === 'training').length === 0 && !isLoading && (
-            <Typography>
-              Não há louvores a serem ensaiados
-            </Typography>
-          ) }
-        </TabPanel>
-
-        
-        <TabPanel value={tab} index={2}>
-          { praises.filter(item => item.status === 'suggestion').map((item) => (
-            <Card variant="outlined" key={item.id} className={classes.card}>
-              <CardHeader
-                avatar={
-                  <Avatar alt={item.created_by.name} src={item.created_by.avatar_url}>
-                    { item.created_by.name.split(' ').map(n => n[0]).slice(0, 2).join('') }
-                  </Avatar>
-                }
-                action={
-                  // <IconButton
-                  //   className={clsx(classes.expand, {
-                  //     [classes.expandOpen]: item.expanded,
-                  //   })}
-                  //   onClick={() => {
-                  //     // setPraises(praises.map(it => ({
-                  //     //   ...it, ...it.id === item.id && {
-                  //     //     expanded: !(it.expanded === true),
-                  //     //   }
-                  //     // })))
-
-                  //     setPraises(praises.map(it => {
-                  //       if(it.id === item.id)
-                  //         it.expanded = !(it.expanded === true)
-                  //       return it
-                  //     }))
-                  //   }}
-                  //   aria-expanded={item.expanded}
-                  //   aria-label="show more"
-                  // >
-                  //   <ExpandMoreIcon />
-                  // </IconButton>
-
-                  <IconButton
-                    aria-label="settings"
-                    onClick={(event) => {
-                      setAnchorEl(event.currentTarget);
-                    }}>
-                    <MoreVertIcon />
-                  </IconButton>
-                  
-                }
-                title={item.name}
-                subheader={item.artist}
-              />
-              <CardContent>
-                <Chip
-                    avatar={<Avatar src={item.created_by.avatar_url} /> }
-                    color="primary"
-                    size="small"
-                    label={"asasdasd"}
-                  />
-
-                { item.tags.map(tag => (
-                  <Chip
-                    key={tag}
-                    // avatar={<Avatar>{item.tone}</Avatar>}
-                    className={classes.tag}
-                    size="small"
-                    label={tag}
-                  />
-                )) }
-              </CardContent>
-
-            </Card>
-          )) }
-
-          { praises.filter(item => item.status === 'suggestion').length === 0 && !isLoading && (
-            <Typography>
-              Nenhuma sugestão encontrada
-            </Typography>
-          ) }
-        </TabPanel> */}
-
-      </SwipeableViews>
+              {praises.filter(item => item.status === tabId).length === 0 && !isLoading && (
+                <Typography>
+                  {[
+                    "Não há louvores aprovados",
+                    "Não há louvores a serem ensaiados",
+                    "Nenhuma sugestão encontrada"
+                  ][index]}
+                </Typography>
+              )}
+            </TabPanel>
+          ))}
+        </SwipeableViews>
+      ) : <ContentError className={classes.content} /> }
 
       <EditPraiseDialog
         open={dialogEditorOpen}
@@ -357,22 +277,6 @@ export default function PraisesListPage() {
         onClose={handleDialogEditorClose}
         onSave={handleDialogEditorSave}
       />
-
-      {/* <Dialog onClose={handleDialogEditorClose} aria-labelledby="simple-dialog-title" open={dialogEditorOpen}>
-        <DialogTitle id="simple-dialog-title">
-          { (dialogEditorData.id ? 'Editar' : 'Novo') + ' louvor' }
-        </DialogTitle>
-
-        <form onSubmit={handleDialogEditorSave} className={classes.form}>
-          <DialogContent>
-            <EditPraiseFields value={dialogEditorData} onChange={(p) => setDialogEditorData(p)} />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogEditorClose}>Cancelar</Button>
-            <Button onClick={() => handleDialogEditorSave(dialogEditorData)} color="primary">Salvar</Button>
-          </DialogActions>
-        </form>
-      </Dialog> */}
 
       <Fab
         color="primary"

@@ -1,5 +1,5 @@
 import { getAuthUser } from "../controllers/AuthController"
-import errors from "../src/errors"
+import { HttpError } from "../src/errors"
 
 const Middleware = (middlewares, fn) => async (req, res) => {
   try {
@@ -18,8 +18,10 @@ const Middleware = (middlewares, fn) => async (req, res) => {
 
     return fn(req, res, user)
   }
-  catch(ex){
-    return res.status(errors.status(ex.code)).json(ex)
+  catch(err){
+    if(err instanceof HttpError)
+      return res.status(err.status).json(err)
+    else throw err
   }
 }
 

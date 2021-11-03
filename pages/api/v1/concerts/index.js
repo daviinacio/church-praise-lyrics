@@ -1,14 +1,25 @@
-import RouteNotFound from "../../404";
 import Middleware from '../../../../middlewares/CoreMiddleware'
 
-const handler = async (req, res) => {
-  switch(req.method.trim().toUpperCase()){
-    case 'GET': return await index(req, res);
-    case 'POST': return await store(req, res);
+import {
+  HttpError,
+  RouteNotFoundError
+} from '../../../../src/errors'
 
-    default:
-      return RouteNotFound(req, res);
-  };
+const handler = async (req, res) => {
+  try {
+    switch(req.method.trim().toUpperCase()){
+      case 'GET': return await index(req, res);
+      case 'POST': return await store(req, res);
+
+      default:
+        throw new RouteNotFoundError(req)
+    };
+  }
+  catch(err){
+    if(err instanceof HttpError)
+      return res.status(err.status).json(err)
+    else throw err
+  }
 };
 
 export const index = Middleware(['auth:anonymous'], async (req, res) => {

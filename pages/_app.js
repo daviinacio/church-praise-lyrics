@@ -48,7 +48,7 @@ function MyApp({ Component, pageProps }) {
           }}
           showLabels
         >
-          <BottomNavigationAction label="Escala" value="schedule" icon={<ViewDayIcon />} />
+          {/* <BottomNavigationAction label="Escala" value="schedule" icon={<ViewDayIcon />} /> */}
           <BottomNavigationAction label="Louvores" value="praises" icon={<LibraryMusicIcon />} />
           <BottomNavigationAction label="Membro" value="member" icon={<PersonIcon />} />
         </BottomNavigation>

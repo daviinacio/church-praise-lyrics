@@ -1,8 +1,6 @@
 import { Box, Container, Typography } from "@material-ui/core";
 
-export default function TabPanel(props) {
-  const { children, value, index, showAll = false, ...other } = props;
-
+export default function TabPanel({ children, value, index, showAll = false, ...other }) {
   return (
     <div
       role="tabpanel"

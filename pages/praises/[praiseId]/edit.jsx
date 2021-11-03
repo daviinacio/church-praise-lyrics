@@ -26,6 +26,8 @@ import {
 
 import { Autocomplete } from '@material-ui/lab'
 import { useAPI } from '../../../services/api'
+import { toneValues, transposeValues } from '../../../src/globals'
+import { editPraiseValidator, newPraiseValidator } from '../../../src/validation/praiseValidator'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -106,20 +108,30 @@ export default function EditPraisePage() {
     event.preventDefault();
 
     if(praiseId){
-      await api.put(`praises/${praiseId}`, praise).then(() => {
-        router.push('/praises')
-      })
-      .catch(({response}) => {
-        setValidation(response.data.validation)
-      })
+      const validation = editPraiseValidator.values(praise).build()
+
+      if(validation.alright()){
+        await api.put(`praises/${praiseId}`, praise).then(() => {
+          router.push('/praises')
+        })
+        .catch(({response}) => {
+          setValidation(response.data.validation)
+        })
+      }
+      else setValidation(validation.errors)
     }
     else {
-      await api.post(`praises/`, praise).then(() => {
-        router.push('/praises')
-      })
-      .catch(({response}) => {
-        setValidation(response.data.validation)
-      })
+      const validation = newPraiseValidator.values(praise).build()
+
+      if(validation.alright()){
+        await api.post(`praises/`, praise).then(() => {
+          router.push('/praises')
+        })
+        .catch(({response}) => {
+          setValidation(response.data.validation)
+        })
+      }
+      else setValidation(validation.errors)
     }
   }
 
@@ -185,29 +197,40 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
     if(event) event.preventDefault();
 
     if(praise.id){
-      await api.put(`praises/${praise.id}`, praise).then(({ data }) => {
-        if(typeof onSave === 'function')
-          onSave(data.result)
-      })
-      .catch(({response}) => {
-        setValidation(response.data.validation)
-      })
+      const validation = editPraiseValidator.values(praise).build()
+
+      if(validation.alright()){
+        await api.put(`praises/${praise.id}`, praise).then(({ data }) => {
+          if(typeof onSave === 'function')
+            onSave(data.result)
+        })
+        .catch(({response}) => {
+          setValidation(response.data.validation)
+        })
+      }
+      else setValidation(validation.errors)
     }
     else {
-      await api.post(`praises/?force=${force}`, praise).then(({ data }) => {
-        if(typeof onSave === 'function')
-          onSave(data.result)
-      })
-      .catch(({response}) => {
-        switch(response.data.code){
-          case 'ERR_VALIDATION_FAILED':
-            setValidation(response.data.validation)
-            break
-          case 'ERR_LYRICS_NOT_FOUND':
-            handleInflateDialogConfirm(response.data.message)
-            break
-        }
-      })
+      const validation = newPraiseValidator.values(praise).build()
+
+      if(validation.alright()){
+        await api.post(`praises/?force=${force}`, praise).then(({ data }) => {
+          if(typeof onSave === 'function')
+            onSave(data.result)
+        })
+        .catch(({response}) => {
+          console.log(response)
+          switch(response.data.code){
+            case 'ERR_VALIDATION_FAILED':
+              setValidation(response.data.validation)
+              break
+            case 'ERR_CONTENT_NOT_FOUND':
+              handleInflateDialogConfirm(response.data.message)
+              break
+          }
+        })
+      }
+      else setValidation(validation.errors)
     }
   }
 
@@ -238,6 +261,9 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
           <DialogContentText id="alert-dialog-description">{dialogConfirmMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
+          <Button onClick={handleCloseDialogConfirm} color="secondary" autoFocus>
+            Fechar
+          </Button>
           <Button onClick={handleSelectDialogConfirm} color="primary" autoFocus>
             Salvar mesmo assim
           </Button>
@@ -252,16 +278,6 @@ function EditPraiseFields({ value, validation, onChange }) {
   
   const praiseTags = [
     'ministração', 'oferta', 'adoração'
-  ]
-
-  const toneOptions = [
-    'C', 'C#', 'Cm',
-    'D', 'D#', 'Db', 'Dm',
-    'E', 'E#', 'Eb', 'Em',
-    'F', 'F#', 'Fm',
-    'G', 'G#', 'Gb', 'Gm',
-    'A', 'A#', 'Ab', 'Am',
-    'B', 'B#', 'Bb', 'Bm',
   ]
 
   function setValue(newValue){
@@ -302,11 +318,10 @@ function EditPraiseFields({ value, validation, onChange }) {
             displayEmpty
             onChange={(e) => setValue({...value, tone: e.target.value})}
           >
-            <MenuItem value="?">
-              Não definido
-            </MenuItem>
-            {toneOptions.map((tone => (
-              <MenuItem key={tone} value={tone}>{tone}</MenuItem>
+            {toneValues.map((tone => (
+              <MenuItem key={tone} value={tone}>{
+                tone == '?' ? "Não definido" : tone
+              }</MenuItem>
             )))}
           </Select>
         </FormControl>
@@ -320,16 +335,10 @@ function EditPraiseFields({ value, validation, onChange }) {
             displayEmpty
             onChange={(e) => setValue({...value, transpose: e.target.value})}
           >
-            {[+5, +4, +3, +2, +1].map((transpose) => (
-              <MenuItem key={transpose} value={transpose}>{'+' + transpose}</MenuItem>
-            ))}
-
-            <MenuItem value={0}>
-              Desligado
-            </MenuItem>
-
-            {[-1, -2, -3, -4, -5].map((transpose) => (
-              <MenuItem key={transpose} value={transpose}>{transpose}</MenuItem>
+            {transposeValues.map((transpose) => (
+              <MenuItem key={transpose} value={transpose}>{
+                transpose == 0 ? "Desligado" : (transpose > 0 ? '+' : '') + transpose
+              }</MenuItem>
             ))}
           </Select>
         </FormControl>

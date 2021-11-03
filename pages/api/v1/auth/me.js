@@ -1,12 +1,20 @@
 import Middleware from "../../../../middlewares/CoreMiddleware";
+import { HttpError, RouteNotFoundError } from "../../../../src/errors";
 
 const handler = async (req, res) => {
-  switch(req.method.trim().toUpperCase()){
-    case 'POST': return await me(req, res)
+  try {
+    switch(req.method.trim().toUpperCase()){
+      case 'POST': return await me(req, res)
 
-    default:
-      return RouteNotFound(req, res)
-  };
+      default:
+        throw new RouteNotFoundError(req)
+    };
+  }
+  catch(err){
+    if(err instanceof HttpError)
+      return res.status(err.status).json(err)
+    else throw err
+  }
 };
 
 export const me = Middleware(["auth"], async (req, res, user) => {

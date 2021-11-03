@@ -1,10 +1,12 @@
 import SEO from '../components/SEO'
 
 import { 
-  AppBar, Container, Typography, Checkbox, Button, Paper, TextField, makeStyles, Grid, FormControlLabel
+  AppBar, Container, Typography, Checkbox, Button, Paper, TextField, makeStyles, Grid, FormControlLabel, Link
 } from '@material-ui/core'
 
 import Image from 'next/image'
+
+import NextLink from 'next/link'
 
 import { useState } from 'react'
 import { useAuth } from '../src/auth'
@@ -48,6 +50,10 @@ const useStyles = makeStyles((theme) => ({
   },
   logo: {
     objectFit: "cover",
+  },
+  containerCenter: {
+    display: "flex",
+    justifyContent: "center"
   }
 }))
 
@@ -148,6 +154,12 @@ export default function LoginPage() {
                   Entrar
               </Button>
             </Grid>
+          </Grid>
+
+          <Grid className={classes.containerCenter} container>
+            <NextLink href={"/register"}>
+              <Link href={"/register"}>Clique aqui para criar um login</Link>
+            </NextLink>
           </Grid>
         </Paper>
       </form>
