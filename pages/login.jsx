@@ -66,10 +66,12 @@ export default function LoginPage() {
   const [validation, setValidation] = useState({})
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [keep, setKeep] = useState(false)  
+  const [keep, setKeep] = useState(false)
+  const [isWaitingSubmit, setIsWaitingSubmit] = useState(false)
 
   async function handleSubmit(e){
     e.preventDefault()
+    setValidation({})
     const formValidation = {}
     
     // Client validations
@@ -83,6 +85,8 @@ export default function LoginPage() {
       setValidation(formValidation)
       return;
     }
+
+    setIsWaitingSubmit(true)
 
     await api.post(`auth/login?keep=${keep}`, {
       email, password
@@ -98,6 +102,8 @@ export default function LoginPage() {
     .catch(({response}) => {
       setValidation(response.data.validation)
     })
+
+    setIsWaitingSubmit(false)
   }
 
   return (
@@ -148,6 +154,7 @@ export default function LoginPage() {
           <Grid container>
             <Grid item xs={12}>
               <Button
+                disabled={isWaitingSubmit}
                 variant="contained"
                 color="primary"
                 type="submit">

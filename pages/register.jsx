@@ -61,6 +61,7 @@ export default function RegisterPage() {
   const router = useRouter()
 
   const [validation, setValidation] = useState({})
+  const [isWaitingSubmit, setIsWaitingSubmit] = useState(false)
 
   const [name, setName] = useState("")
   const [username, setUsername] = useState("")
@@ -72,6 +73,7 @@ export default function RegisterPage() {
     e.preventDefault()
     const customValidation = {}
     var serverValidation = {}
+    setValidation({})
 
     const clientValidation = signupValidation.values({
       name, username, email, password
@@ -82,6 +84,8 @@ export default function RegisterPage() {
         customValidation.confirmPassword = "As senhas estão diferentes"
       }
       else {
+        setIsWaitingSubmit(true)
+
         await api.post(`auth/signup`, {
           name, username, email, password
         })
@@ -92,6 +96,8 @@ export default function RegisterPage() {
         .catch(({response}) => {
           serverValidation = response.data.validation
         })
+
+        setIsWaitingSubmit(false)
       }
     }
     
@@ -104,7 +110,7 @@ export default function RegisterPage() {
 
       <form className={classes.root} onSubmit={(e) => handleSubmit(e)} noValidate>
         <Paper elevation={0} className={classes.paper}>
-          <Grid sm={12} className={classes.containerCenter}>
+          <Grid col={12} className={classes.containerCenter}>
             <Typography variant="h4">
               Criar login
             </Typography>
@@ -168,6 +174,7 @@ export default function RegisterPage() {
           <Grid container>
             <Grid item xs={12}>
               <Button
+                disabled={isWaitingSubmit}
                 variant="contained"
                 color="primary"
                 type="submit">
@@ -177,8 +184,8 @@ export default function RegisterPage() {
           </Grid>
 
           <Grid className={classes.containerCenter} container>
-            <NextLink href={"/login"}>
-              <Link href={"/login"}>Já tenho um login</Link>
+            <NextLink href={"/member"}>
+              <Link href={"/member"}>Já tenho um login</Link>
             </NextLink>
           </Grid>
         </Paper>

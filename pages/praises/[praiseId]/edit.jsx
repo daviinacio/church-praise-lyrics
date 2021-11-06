@@ -25,7 +25,7 @@ import {
 } from '@material-ui/core'
 
 import { Autocomplete } from '@material-ui/lab'
-import { useAPI } from '../../../services/api'
+import api, { useAPI } from '../../../services/api'
 import { toneValues, transposeValues } from '../../../src/globals'
 import { editPraiseValidator, newPraiseValidator } from '../../../src/validation/praiseValidator'
 
@@ -106,6 +106,8 @@ export default function EditPraisePage() {
 
   async function handleFormSubmit(event){
     event.preventDefault();
+    setValidation({})
+    setIsWaitingSubmit(true)
 
     if(praiseId){
       const validation = editPraiseValidator.values(praise).build()
@@ -133,6 +135,8 @@ export default function EditPraisePage() {
       }
       else setValidation(validation.errors)
     }
+
+    setIsWaitingSubmit(false)
   }
 
   return (
@@ -172,11 +176,13 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   const [validation, setValidation] = useState({})
   const [dialogConfirmOpen, setDialogConfirmOpen] = useState(false)
   const [dialogConfirmMessage, setDialogConfirmMessage] = useState(false)
+  const [isWaitingSubmit, setIsWaitingSubmit] = useState(false)
 
   const [praise, setPraise] = useState(initialValue || praiseEmpty)
 
   useEffect(() => {
     setPraise(initialValue || praiseEmpty)
+    setValidation({})
   }, [initialValue])
   
   function handleInflateDialogConfirm(message){
@@ -195,6 +201,9 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
 
   async function handleOnSubmit(event, force = false){
     if(event) event.preventDefault();
+    setValidation({})
+
+    if(isWaitingSubmit) return;
 
     if(praise.id){
       const validation = editPraiseValidator.values(praise).build()
@@ -264,7 +273,7 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
           <Button onClick={handleCloseDialogConfirm} color="secondary" autoFocus>
             Fechar
           </Button>
-          <Button onClick={handleSelectDialogConfirm} color="primary" autoFocus>
+          <Button disabled={isWaitingSubmit} onClick={handleSelectDialogConfirm} color="primary" autoFocus>
             Salvar mesmo assim
           </Button>
         </DialogActions>
@@ -275,10 +284,12 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
 
 function EditPraiseFields({ value, validation, onChange }) {
   const classes = useStyles()
-  
-  const praiseTags = [
-    'ministração', 'oferta', 'adoração'
-  ]
+  const [praiseTags, setPraiseTags] = useState([])
+
+  useEffect(async () => {
+    const { data: { result } } = await api.get(`/tags`)
+    setPraiseTags(result)
+  }, [])
 
   function setValue(newValue){
     if(typeof onChange === 'function')

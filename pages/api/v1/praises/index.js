@@ -29,6 +29,27 @@ const handler = async (req, res) => {
   }
 };
 
+// Prisma
+const prismaInclude = {
+  artist: {
+    select: {
+      name: true
+    }
+  },
+  tags: {
+    select: {
+      label: true
+    }
+  },
+  suggested_by: {
+    select: {
+      name: true,
+      username: true,
+      avatar_url: true
+    }
+  }
+}
+
 export const index = Middleware(['auth:anonymous'], async (req, res) => {
   const { praiseId } = req.query
 
@@ -36,23 +57,7 @@ export const index = Middleware(['auth:anonymous'], async (req, res) => {
     const praise = await prisma.praises.findFirst({
       where: { id: praiseId },
       include: {
-        artist: {
-          select: {
-            name: true
-          }
-        },
-        tags: {
-          select: {
-            label: true
-          }
-        },
-        suggested_by: {
-          select: {
-            name: true,
-            username: true,
-            avatar_url: true
-          }
-        },
+        ...prismaInclude,
         lyrics: {
           select: {
             content: true
@@ -74,25 +79,7 @@ export const index = Middleware(['auth:anonymous'], async (req, res) => {
   else {
     const count = await prisma.praises.count()
     const praises = await prisma.praises.findMany({
-      include: {
-        artist: {
-          select: {
-            name: true
-          }
-        },
-        tags: {
-          select: {
-            label: true
-          }
-        },
-        suggested_by: {
-          select: {
-            name: true,
-            username: true,
-            avatar_url: true
-          }
-        }
-      }
+      include: prismaInclude
     })
 
     praises.forEach((value, index) => {
@@ -125,13 +112,17 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
       }
     })
     .then(({ data }) => {
-      console.log(12356)
-      if(data.mus || force === 'true') return {
+      if((data.mus && data.art) || force === 'true') return {
         artist: data.art || {},
         music: (data.mus || [])[0] || {}
-      } 
-      else throw new ContentNotFoundError(
-        `Não foi possivel encontrar a letra desse louvor no site vagalume. Verifique o nome informado, e tente novamento.`
+      }
+      else
+      if(!data.art) throw new ValidationFailedError({
+        artist: 'Cantor não encontrado, por favor verifique e tente novamente'
+      })
+      else
+      if(!data.mus) throw new ContentNotFoundError(
+        `Não foi possivel encontrar a letra desse louvor no site vagalume. Verifique o nome informado, e tente novamente.`
       )
     })
 
@@ -183,23 +174,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
         }
       },
       include: {
-        artist: {
-          select: {
-            name: true
-          }
-        },
-        tags: {
-          select: {
-            label: true
-          }
-        },
-        suggested_by: {
-          select: {
-            name: true,
-            username: true,
-            avatar_url: true
-          }
-        },
+        ...prismaInclude,
         lyrics: {
           select: {
             content: true
@@ -229,7 +204,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
 })
 
 export const update = Middleware(['auth'], async (req, res) => {
-  const { name: praise_name, tone = '?', transpose = 0, artist: artist_name, tags = [], status = PraiseStatus.SUGGESTION } = req.body
+  const { name: praise_name, tone, transpose, artist: artist_name, tags = [], status = PraiseStatus.SUGGESTION } = req.body
   const { praiseId } = req.query
 
   const validation = editPraiseValidator.values({
@@ -274,25 +249,7 @@ export const update = Middleware(['auth'], async (req, res) => {
           })),
         }
       },
-      include: {
-        artist: {
-          select: {
-            name: true
-          }
-        },
-        tags: {
-          select: {
-            label: true
-          }
-        },
-        suggested_by: {
-          select: {
-            name: true,
-            username: true,
-            avatar_url: true
-          }
-        }
-      }
+      include: prismaInclude
     })
     .catch((err) => {
       if(err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0){
@@ -310,7 +267,12 @@ export const update = Middleware(['auth'], async (req, res) => {
   
     praise.artist = praise.artist.name
     praise.tags = praise.tags.map(tag => (tag.label))
-    
+
+    // Remove not uses tags
+    await prisma.tags.deleteMany({
+      where: { praises: { none: {} } }
+    })
+
     return res.status(200).json({
       status: 200,
       result: praise
