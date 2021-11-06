@@ -108,7 +108,9 @@ export default function PraisesListPage() {
         return praise
       }))
     })
-    .catch(() => { })
+    .catch((err) => { 
+      snackbar(err.response.data.message, 'error')
+     })
   }
 
   function handleMenuEdit(data) {
