@@ -8,6 +8,15 @@
     "sqlite",
     "upsert",
     "use",
-    "vagalume"
-  ]
+    "vagalume",
+    "maxage"
+  ],
+  "cSpell.customDictionaries": {
+    "custom-dictionary-workspace": {
+      "name": "custom-dictionary-workspace",
+      "path": "${workspaceFolder:adfg-louvor}/.cspell/custom-dictionary-workspace.txt",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  }
 }

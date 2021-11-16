@@ -130,8 +130,8 @@ export default function SchedulePage() {
                         })}
                       </Typography>
                       <Typography variant="body2" color="textSecondary" component="p">
-                        {item.praises.map(praise => (
-                          <div>{praise.name}</div>
+                        {item.praises.map((praise, index) => (
+                          <div key={index}>{praise.name}</div>
                         ))}
                       </Typography>
                       

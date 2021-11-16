@@ -369,7 +369,7 @@ function EditPraiseFields({ value, validation, onChange }) {
         }}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
-            <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+            <Chip variant="outlined" label={option} key={index} {...getTagProps({ index })} />
           ))
         }
         renderInput={(params) => (

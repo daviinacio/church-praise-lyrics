@@ -9,6 +9,8 @@ import {
   Box
 } from "@material-ui/core"
 
+import api from '../../../services/api'
+
 const useStyles = makeStyles((theme) => ({
   root: {
     padding: 15,
@@ -56,10 +58,10 @@ export default function PraisePage({ data }){
               <Typography className={classes.artist_name} color="primary">{data.artist}</Typography>
 
               <Box className={classes.lyrics_container}>
-                {data.lyrics.content.split('\n\n').map(block => (
-                  <Box className={classes.lyrics_block}>
-                    {block.split('\n').map(line => (
-                      <Typography className={classes.lyrics_line}>
+                {data.lyrics.content.split('\n\n').map((block, index) => (
+                  <Box className={classes.lyrics_block} key={index}>
+                    {block.split('\n').map((line, index) => (
+                      <Typography className={classes.lyrics_line} key={index}>
                         {line}
                       </Typography>
                     ))}
@@ -76,76 +78,27 @@ export default function PraisePage({ data }){
       </>
     )
   }
-  else return <h1>Não encontrado</h1>
+  else return <h1>Letra não encontrada</h1>
 }
 
-export async function getStaticPaths() {
-  //const { data: praises } = await api.get(`praises`)
-  const prisma = new PrismaClient()
+export async function getServerSideProps({ query: { praiseId }, res }){
+  const { data } = await api.get(`/praises/${praiseId}`)
 
-  const praises = await prisma.praises.findMany({
-    select: {
-      id: true
-    }
-  })
+  //res.setHeader('Cache-Control', `s-maxage=${ process.env.CACHE_MAXAGE || 60 }, stale-while-revalidate`)
 
   return {
-    paths: praises.map(praise => ({
-      params: { praiseId: praise.id }
-    })),
-    fallback: true
-  }
-}
-
-export async function getStaticProps(context){
-  try {
-    // const { data } = await api.get(`praises`)
-    const prisma = new PrismaClient()
-    const praise = await prisma.praises.findFirst({
-      where: {
-        id: context.params.praiseId
-      },
-      include: {
-          artist: {
-            select: {
-              name: true
-            }
-          },
-          tags: {
-            select: {
-              label: true
-            }
-          },
-          suggested_by: {
-            select: {
-              name: true,
-              username: true,
-              avatar_url: true
-            }
-          },
-          lyrics: {
-            select: {
-              content: true
-            }
-          }
-        }
-    })
-    .then(result => (
-      JSON.parse(JSON.stringify(result))
-    ))
-
-    praise.artist = praise.artist.name
-    praise.tags = praise.tags.map(tag => (tag.label))
-
-    return {
-      props: {
-        data: praise
-      }
-    }
-  }
-  catch(error){
-    return {
-      error
+    props: {
+      data: data.result
     }
   }
 }
+
+// PraisePage.getInitialProps = async ({ query: { praiseId }, res }) => {
+//   const { data } = await api.get(`/praises/${praiseId}`)
+
+//   //res.setHeader('Cache-Control', `s-maxage=${ process.env.CACHE_MAXAGE || 60 }, stale-while-revalidate`)
+
+//   return {
+//     data: data.result
+//   }
+// }
