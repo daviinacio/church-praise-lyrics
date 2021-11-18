@@ -23,6 +23,12 @@ const routesWithNavigation = [
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter()
+  
+  if(process.browser){
+    window.addEventListener('offline', () => {
+      snackbar('Você está offline no momento, algumas informações podem estar desatualizadas.', 'warning')
+    })
+  }
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
