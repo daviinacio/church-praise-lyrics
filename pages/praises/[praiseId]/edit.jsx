@@ -28,6 +28,7 @@ import { Autocomplete } from '@material-ui/lab'
 import api, { useAPI } from '../../../services/api'
 import { toneValues, transposeValues } from '../../../src/globals'
 import { editPraiseValidator, newPraiseValidator } from '../../../src/validation/praiseValidator'
+import { PraiseStatus } from '@prisma/client'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -71,7 +72,7 @@ const useStyles = makeStyles((theme) => ({
 
 const praiseEmpty = {
   id: '',
-  status: 'suggestion',
+  status: PraiseStatus.SUGGESTION,
   name: '',
   artist: '',
   tone: '?',

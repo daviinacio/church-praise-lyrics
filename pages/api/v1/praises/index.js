@@ -1,5 +1,5 @@
 import Middleware from '../../../../middlewares/CoreMiddleware'
-import { PrismaClient } from "@prisma/client"
+import { PraiseStatus, PrismaClient } from "@prisma/client"
 import vagalume from '../../../../services/vagalume'
 
 import {
@@ -156,7 +156,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
             }
           }
         },
-        status: "SUGGESTION",
+        status: PraiseStatus.SUGGESTION,
         transpose,
         tone,
         ...vagalume_result.music.text && {
@@ -204,7 +204,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
 })
 
 export const update = Middleware(['auth'], async (req, res) => {
-  const { name: praise_name, tone, transpose, artist: artist_name, tags = [], status = "SUGGESTION" } = req.body
+  const { name: praise_name, tone, transpose, artist: artist_name, tags = [], status = PraiseStatus.SUGGESTION } = req.body
   const { praiseId } = req.query
 
   const validation = editPraiseValidator.values({

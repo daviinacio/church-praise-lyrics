@@ -223,7 +223,7 @@ export default function PraisesListPage() {
           className={classes.content}
           onChangeIndex={(index) => handleChangeTab(undefined, index)}>
 
-          {["APPROVED", "REHEARSING", "SUGGESTION"].map((tabId, index) => (
+          {Object.keys(PraiseStatus).map((tabId, index) => (
             <TabPanel value={tab} index={index} showAll={false} key={tabId}>
               {praises.filter(item => item.status === tabId).map((item) => (
                 <Card variant="outlined" key={item.id} className={classes.card}>
@@ -302,11 +302,11 @@ export default function PraisesListPage() {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}>
 
-        {anchorData.status === "SUGGESTION" && (
-          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, "REHEARSING")}>Ensaiar</MenuItem>
+        {anchorData.status === PraiseStatus.SUGGESTION && (
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.REHEARSING)}>Ensaiar</MenuItem>
         )}
 
-        {anchorData.status === "REHEARSING" && (
+        {anchorData.status === PraiseStatus.REHEARSING && (
           <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, "APPROVED")}>Aprovar</MenuItem>
         )}
 
