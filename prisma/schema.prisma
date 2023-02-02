@@ -1,105 +1,110 @@
 datasource db {
-  provider  = "mysql"
-  url       = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 model Users {
-  id              String          @id @map("_id") @default(uuid())
-  name            String
-  username        String          @unique
-  email           String          @unique
-  password        String
-  avatar_url      String?
-  sys_admin       Boolean         @default(false)
-  is_active       Boolean         @default(true)
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @default(now())
+  id         String   @id @default(uuid()) @map("_id")
+  name       String
+  username   String   @unique
+  email      String   @unique
+  password   String
+  avatar_url String?
+  sys_admin  Boolean  @default(false)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 
-  roles           Roles[]
-  sessions        Sessions[]      @relation("user_sessions")
-  praises         Praises[]       @relation("user_praises")
+  roles    Roles[]
+  sessions Sessions[] @relation("user_sessions")
+  praises  Praises[]  @relation("user_praises")
 
   @@map("users")
 }
 
 model Sessions {
-  id              Int             @id @map("_id") @default(autoincrement())
-  token           String          @db.VarChar(256)
-  type            String          @default("bearer")
-  expires_in      Int
-  logged_at       DateTime        @default(now())
-  inactivated_at  DateTime?
-  is_active       Boolean         @default(true)
+  id             Int       @id @default(autoincrement()) @map("_id")
+  token          String    @db.VarChar(256)
+  type           String    @default("bearer")
+  expires_in     Int
+  logged_at      DateTime  @default(now())
+  inactivated_at DateTime?
+  is_active      Boolean   @default(true)
 
-  user_id         String
-  user            Users           @relation("user_sessions", fields: [user_id], references: [id])
+  user_id String
+  user    Users  @relation("user_sessions", fields: [user_id], references: [id])
 
+  @@index([user_id])
   @@map("sessions")
 }
 
 model Roles {
-  id              Int             @id @map("_id") @default(autoincrement())
-  name            String          @unique
-  is_active       Boolean         @default(true)
+  id        Int     @id @default(autoincrement()) @map("_id")
+  name      String  @unique
+  is_active Boolean @default(true)
 
-  users           Users[]
+  users Users[]
 
   @@map("roles")
 }
 
 model Artists {
-  id              String          @id @map("_id") @default(uuid())
-  name            String          @unique
-  vagalume_id     String?         @unique
-  created_at      DateTime        @default(now())
+  id          String   @id @default(uuid()) @map("_id")
+  name        String   @unique
+  vagalume_id String?  @unique
+  created_at  DateTime @default(now())
 
-  praises         Praises[]       @relation("artist_praises")
+  praises Praises[] @relation("artist_praises")
 
   @@map("artists")
 }
 
 model Praises {
-  id              String          @id @map("_id") @default(uuid())
-  name            String
-  vagalume_id     String?         @unique()
-  tone            String          @default("?")
-  status          PraiseStatus
-  transpose       Int             @default(0)
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @default(now())
+  id          String       @id @default(uuid()) @map("_id")
+  name        String
+  vagalume_id String?      @unique()
+  tone        String       @default("?")
+  status      PraiseStatus
+  transpose   Int          @default(0)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @default(now())
 
-  artist_id       String
-  artist          Artists         @relation("artist_praises", fields: [artist_id], references: [id])
+  artist_id String
+  artist    Artists @relation("artist_praises", fields: [artist_id], references: [id])
 
   suggested_by_id String?
-  suggested_by    Users?          @relation("user_praises", fields: [suggested_by_id], references: [id])
+  suggested_by    Users?  @relation("user_praises", fields: [suggested_by_id], references: [id])
 
-  lyrics          Lyrics?         @relation("praises_lyrics")
-  tags            Tags[]          @relation("praises_tags")
+  lyrics Lyrics? @relation("praises_lyrics")
+  tags   Tags[]  @relation("praises_tags")
 
   @@unique([name, artist_id], name: "praises_name_unique")
-
+  @@index([artist_id])
+  @@index([suggested_by_id])
   @@map("praises")
 }
 
 model Lyrics {
-  id              String          @id @map("_id") @default(uuid())
-  content         String          @db.LongText()
+  id      String @id @default(uuid()) @map("_id")
+  content String @db.LongText()
 
-  praise_id       String?
-  praise          Praises?        @relation("praises_lyrics", fields: [praise_id], references: [id])
+  praise_id String?  @unique
+  praise    Praises? @relation("praises_lyrics", fields: [praise_id], references: [id])
 
   @@map("lyrics")
 }
 
 model Tags {
-  id              Int             @id @map("_id") @default(autoincrement())
-  label           String          @unique
-  praises         Praises[]       @relation("praises_tags")
+  id      Int       @id @default(autoincrement()) @map("_id")
+  label   String    @unique
+  praises Praises[] @relation("praises_tags")
 
   @@map("tags")
 }
