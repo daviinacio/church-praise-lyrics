@@ -58,7 +58,7 @@ export default function PraisePage({ data }) {
               <Typography className={classes.artist_name} color="primary">{data.artist}</Typography>
 
               <Box className={classes.lyrics_container}>
-                {data.lyrics.content.split('\n\n').map((block, index) => (
+                {data.lyrics && data.lyrics.content.split('\n\n').map((block, index) => (
                   <Box className={classes.lyrics_block} key={index}>
                     {block.split('\n').map((line, index) => (
                       <Typography className={classes.lyrics_line} key={index}>
@@ -96,7 +96,7 @@ export async function getServerSideProps({ query: { praiseId }, res }) {
   catch (err) {
     return {
       props: {
-        data: {}
+        data: null
       }
     }
   }
