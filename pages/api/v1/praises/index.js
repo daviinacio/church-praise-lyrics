@@ -156,7 +156,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
             }
           }
         },
-        status: "SUGGESTION",
+        status: PraiseStatus.SUGGESTION,
         transpose,
         tone,
         ...vagalume_result.music.text && {

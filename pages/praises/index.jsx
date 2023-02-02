@@ -101,16 +101,16 @@ export default function PraisesListPage() {
     await api.put(`praises/${praiseId}`, {
       status: newStatus
     })
-    .then(() => {
-      setPraises(praises.map(praise => {
-        if (praise.id === praiseId)
-          praise.status = newStatus
-        return praise
-      }))
-    })
-    .catch((err) => { 
-      snackbar(err.response.data.message, 'error')
-     })
+      .then(() => {
+        setPraises(praises.map(praise => {
+          if (praise.id === praiseId)
+            praise.status = newStatus
+          return praise
+        }))
+      })
+      .catch((err) => {
+        snackbar(err.response.data.message, 'error')
+      })
   }
 
   function handleMenuEdit(data) {
@@ -180,17 +180,19 @@ export default function PraisesListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hadError, setHadError] = useState(false)
 
-  useEffect(async () => {
-    await api.get('praises').then(({ data }) => {
-      const { result } = data
-      setPraises(result)
-      setIsLoading(false)
-      setHadError(false)
-    })
-    .catch((error) => {
-      setIsLoading(false)
-      setHadError(true)
-    })
+  useEffect(() => {
+    (async function () {
+      await api.get('praises').then(({ data }) => {
+        const { result } = data
+        setPraises(result)
+        setIsLoading(false)
+        setHadError(false)
+      })
+        .catch((error) => {
+          setIsLoading(false)
+          setHadError(true)
+        })
+    })()
   }, [])
 
   return (
@@ -214,7 +216,7 @@ export default function PraisesListPage() {
         </Tabs>
       </AppBar>
 
-      { !hadError ? (
+      {!hadError ? (
         <SwipeableViews
           axis={'x'}
           index={tab}
@@ -232,8 +234,8 @@ export default function PraisesListPage() {
                           alt={item.tone}
                           className={classes.tone}
                           onClick={() => handleShowPraiseDetails(item.id)}>
-                            {item.tone}
-                          </Avatar>
+                          {item.tone}
+                        </Avatar>
                       }
                       title={
                         <span onClick={() => handleShowPraiseDetails(item.id)}>{item.name}</span>
@@ -271,7 +273,7 @@ export default function PraisesListPage() {
             </TabPanel>
           ))}
         </SwipeableViews>
-      ) : <ContentError className={classes.content} /> }
+      ) : <ContentError className={classes.content} />}
 
       <EditPraiseDialog
         open={dialogEditorOpen}
@@ -305,7 +307,7 @@ export default function PraisesListPage() {
         )}
 
         {anchorData.status === PraiseStatus.REHEARSING && (
-          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, PraiseStatus.APPROVED)}>Aprovar</MenuItem>
+          <MenuItem onClick={() => handleMenuChangeStatus(anchorData.id, "APPROVED")}>Aprovar</MenuItem>
         )}
 
         <MenuItem onClick={() => handleMenuEdit(anchorData)}>Editar</MenuItem>

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import SEO from '../../../components/SEO'
 import { makeStyles } from '@material-ui/core/styles'
 
-import { 
+import {
   AppBar,
   Container,
   Typography,
@@ -28,6 +28,7 @@ import { Autocomplete } from '@material-ui/lab'
 import api, { useAPI } from '../../../services/api'
 import { toneValues, transposeValues } from '../../../src/globals'
 import { editPraiseValidator, newPraiseValidator } from '../../../src/validation/praiseValidator'
+import { PraiseStatus } from '@prisma/client'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -37,9 +38,9 @@ const useStyles = makeStyles((theme) => ({
     minHeight: '-webkit-fill-available'
   },
   content: {
-    
+
   },
-  dialogContent: { },
+  dialogContent: {},
   pageForm: {
     // paddingTop: theme.spacing(1),
     paddingBottom: theme.spacing(1),
@@ -71,7 +72,7 @@ const useStyles = makeStyles((theme) => ({
 
 const praiseEmpty = {
   id: '',
-  status: 'suggestion',
+  status: PraiseStatus.SUGGESTION,
   name: '',
   artist: '',
   tone: '?',
@@ -88,50 +89,51 @@ export default function EditPraisePage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [praise, setPraise] = useState(praiseEmpty)
-  
+
   const pageTitle = (praiseId ? "Editar" : "Nova sugestão de") + " louvor"
 
-  useEffect(async () => {
-    if(praiseId){
-      const { data } = await api.get(`praises/${praiseId}`)
+  useEffect(() => {
+    (async function () {
+      if (praiseId) {
+        const { data } = await api.get(`praises/${praiseId}`)
 
-      setPraise(data)
-      setIsLoading(false)
-    }
+        setPraise(data)
+        setIsLoading(false)
+      }
 
-    if(router.pathname === '/praises/new')
-      setIsLoading(false)
-
+      if (router.pathname === '/praises/new')
+        setIsLoading(false)
+    })();
   }, [router])
 
-  async function handleFormSubmit(event){
+  async function handleFormSubmit(event) {
     event.preventDefault();
     setValidation({})
     setIsWaitingSubmit(true)
 
-    if(praiseId){
+    if (praiseId) {
       const validation = editPraiseValidator.values(praise).build()
 
-      if(validation.alright()){
+      if (validation.alright()) {
         await api.put(`praises/${praiseId}`, praise).then(() => {
           router.push('/praises')
         })
-        .catch(({response}) => {
-          setValidation(response.data.validation)
-        })
+          .catch(({ response }) => {
+            setValidation(response.data.validation)
+          })
       }
       else setValidation(validation.errors)
     }
     else {
       const validation = newPraiseValidator.values(praise).build()
 
-      if(validation.alright()){
+      if (validation.alright()) {
         await api.post(`praises/`, praise).then(() => {
           router.push('/praises')
         })
-        .catch(({response}) => {
-          setValidation(response.data.validation)
-        })
+          .catch(({ response }) => {
+            setValidation(response.data.validation)
+          })
       }
       else setValidation(validation.errors)
     }
@@ -161,7 +163,7 @@ export default function EditPraisePage() {
           </Button>
         </form>
       </Container>
-      
+
       <Backdrop variant="loading" open={isLoading}>
         <CircularProgress color={"primary"} />
       </Backdrop>
@@ -169,7 +171,7 @@ export default function EditPraisePage() {
   )
 }
 
-export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
+export function EditPraiseDialog({ onClose, onSave, open, initialValue }) {
   const classes = useStyles()
   const api = useAPI()
 
@@ -184,60 +186,60 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
     setPraise(initialValue || praiseEmpty)
     setValidation({})
   }, [initialValue])
-  
-  function handleInflateDialogConfirm(message){
+
+  function handleInflateDialogConfirm(message) {
     setDialogConfirmMessage(message)
     setDialogConfirmOpen(true)
   }
 
-  function handleCloseDialogConfirm(){
+  function handleCloseDialogConfirm() {
     setDialogConfirmOpen(false)
   }
 
-  function handleSelectDialogConfirm(){
+  function handleSelectDialogConfirm() {
     setDialogConfirmOpen(false)
     handleOnSubmit(undefined, true)
   }
 
-  async function handleOnSubmit(event, force = false){
-    if(event) event.preventDefault();
+  async function handleOnSubmit(event, force = false) {
+    if (event) event.preventDefault();
     setValidation({})
 
-    if(isWaitingSubmit) return;
+    if (isWaitingSubmit) return;
 
-    if(praise.id){
+    if (praise.id) {
       const validation = editPraiseValidator.values(praise).build()
 
-      if(validation.alright()){
+      if (validation.alright()) {
         await api.put(`praises/${praise.id}`, praise).then(({ data }) => {
-          if(typeof onSave === 'function')
+          if (typeof onSave === 'function')
             onSave(data.result)
         })
-        .catch(({response}) => {
-          setValidation(response.data.validation)
-        })
+          .catch(({ response }) => {
+            setValidation(response.data.validation)
+          })
       }
       else setValidation(validation.errors)
     }
     else {
       const validation = newPraiseValidator.values(praise).build()
 
-      if(validation.alright()){
+      if (validation.alright()) {
         await api.post(`praises/?force=${force}`, praise).then(({ data }) => {
-          if(typeof onSave === 'function')
+          if (typeof onSave === 'function')
             onSave(data.result)
         })
-        .catch(({response}) => {
-          console.log(response)
-          switch(response.data.code){
-            case 'ERR_VALIDATION_FAILED':
-              setValidation(response.data.validation)
-              break
-            case 'ERR_CONTENT_NOT_FOUND':
-              handleInflateDialogConfirm(response.data.message)
-              break
-          }
-        })
+          .catch(({ response }) => {
+            console.log(response)
+            switch (response.data.code) {
+              case 'ERR_VALIDATION_FAILED':
+                setValidation(response.data.validation)
+                break
+              case 'ERR_CONTENT_NOT_FOUND':
+                handleInflateDialogConfirm(response.data.message)
+                break
+            }
+          })
       }
       else setValidation(validation.errors)
     }
@@ -246,7 +248,7 @@ export function EditPraiseDialog({ onClose, onSave, open, initialValue }){
   return (
     <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open}>
       <DialogTitle>
-        { (praise.id ? 'Editar' : 'Nova sugestão de') + ' louvor' }
+        {(praise.id ? 'Editar' : 'Nova sugestão de') + ' louvor'}
       </DialogTitle>
 
       <form onSubmit={handleOnSubmit} className={classes.dialogForm} noValidate>
@@ -286,13 +288,15 @@ function EditPraiseFields({ value, validation, onChange }) {
   const classes = useStyles()
   const [praiseTags, setPraiseTags] = useState([])
 
-  useEffect(async () => {
-    const { data: { result } } = await api.get(`/tags`)
-    setPraiseTags(result)
+  useEffect(() => {
+    (async function () {
+      const { data: { result } } = await api.get(`/tags`)
+      setPraiseTags(result)
+    })()
   }, [])
 
-  function setValue(newValue){
-    if(typeof onChange === 'function')
+  function setValue(newValue) {
+    if (typeof onChange === 'function')
       onChange(newValue)
   }
 
@@ -303,23 +307,23 @@ function EditPraiseFields({ value, validation, onChange }) {
         id="form-name"
         label="Nome do louvor"
         value={value.name || ''}
-        onChange={(e) => setValue({...value, name: e.target.value})}
+        onChange={(e) => setValue({ ...value, name: e.target.value })}
         disabled={typeof value.vagalume_id === 'string'}
         error={typeof validation.name === 'string'}
-        helperText={validation.name}/>
-      
+        helperText={validation.name} />
+
       <TextField
         required
         id="form-artist"
         label="Cantor / Grupo / Banda"
         value={value.artist || ''}
-        onChange={(e) => setValue({...value, artist: e.target.value})}
+        onChange={(e) => setValue({ ...value, artist: e.target.value })}
         disabled={typeof value.vagalume_id === 'string'}
         error={typeof validation.artist === 'string'}
-        helperText={validation.artist}/>
+        helperText={validation.artist} />
 
-      <div style={{display: 'flex', marginBottom: 16}}>
-        <FormControl style={{flex: 1}}>
+      <div style={{ display: 'flex', marginBottom: 16 }}>
+        <FormControl style={{ flex: 1 }}>
           <InputLabel id="form-praises-tone-label">Tom original</InputLabel>
           <Select
             labelId="form-praises-tone-label"
@@ -327,7 +331,7 @@ function EditPraiseFields({ value, validation, onChange }) {
             value={value.tone || ''}
             className={classes.select}
             displayEmpty
-            onChange={(e) => setValue({...value, tone: e.target.value})}
+            onChange={(e) => setValue({ ...value, tone: e.target.value })}
           >
             {toneValues.map((tone => (
               <MenuItem key={tone} value={tone}>{
@@ -336,7 +340,7 @@ function EditPraiseFields({ value, validation, onChange }) {
             )))}
           </Select>
         </FormControl>
-        <FormControl style={{flex: 1, marginLeft: 10}}>
+        <FormControl style={{ flex: 1, marginLeft: 10 }}>
           <InputLabel id="form-praises-transpose-label">Transpose (ST)</InputLabel>
           <Select
             labelId="form-praises-transpose-label"
@@ -344,7 +348,7 @@ function EditPraiseFields({ value, validation, onChange }) {
             value={value.transpose || 0}
             className={classes.select}
             displayEmpty
-            onChange={(e) => setValue({...value, transpose: e.target.value})}
+            onChange={(e) => setValue({ ...value, transpose: e.target.value })}
           >
             {transposeValues.map((transpose) => (
               <MenuItem key={transpose} value={transpose}>{

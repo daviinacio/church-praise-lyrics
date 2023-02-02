@@ -36,10 +36,10 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function PraisePage({ data }){
+export default function PraisePage({ data }) {
   const classes = useStyles()
-  
-  if(data) {
+
+  if (data) {
     return (
       <>
         <SEO title={`${data.name} - ${data.artist}`} />
@@ -52,13 +52,13 @@ export default function PraisePage({ data }){
         </AppBar> */}
 
         <Container className={classes.root}>
-          {data.lyrics ? 
+          {data.lyrics ?
             <Box>
               <Typography className={classes.praise_name}>{data.name}</Typography>
               <Typography className={classes.artist_name} color="primary">{data.artist}</Typography>
 
               <Box className={classes.lyrics_container}>
-                {data.lyrics.content.split('\n\n').map((block, index) => (
+                {data.lyrics && data.lyrics.content.split('\n\n').map((block, index) => (
                   <Box className={classes.lyrics_block} key={index}>
                     {block.split('\n').map((line, index) => (
                       <Typography className={classes.lyrics_line} key={index}>
@@ -81,14 +81,23 @@ export default function PraisePage({ data }){
   else return <h1>Letra não encontrada</h1>
 }
 
-export async function getServerSideProps({ query: { praiseId }, res }){
-  const { data } = await api.get(`/praises/${praiseId}`)
+export async function getServerSideProps({ query: { praiseId }, res }) {
+  try {
+    const { data } = await api.get(`/praises/${praiseId}`)
 
-  //res.setHeader('Cache-Control', `s-maxage=${ process.env.CACHE_MAXAGE || 60 }, stale-while-revalidate`)
+    //res.setHeader('Cache-Control', `s-maxage=${ process.env.CACHE_MAXAGE || 60 }, stale-while-revalidate`)
 
-  return {
-    props: {
-      data: data.result
+    return {
+      props: {
+        data: data.result
+      }
+    }
+  }
+  catch (err) {
+    return {
+      props: {
+        data: null
+      }
     }
   }
 }

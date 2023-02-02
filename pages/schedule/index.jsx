@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/router';
 
-import { 
+import {
   AppBar,
   Container,
   Typography,
@@ -63,19 +63,19 @@ export default function SchedulePage() {
   const api = useAPI()
 
   // Date
-  function getDateMoment(date){
-    
+  function getDateMoment(date) {
+
   }
 
   // Tabs
   const [tab, setTab] = useState(1)
 
-  function handleChangeTab(event, newTab){
+  function handleChangeTab(event, newTab) {
     setTab(newTab)
   }
-  
+
   // Dialog Editor
-  function handleDialogEditorInflate(data){
+  function handleDialogEditorInflate(data) {
 
   }
 
@@ -83,12 +83,14 @@ export default function SchedulePage() {
   const [concerts, setConcerts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(async () => {
-    await api.get('concerts').then(({data}) => {
-      setConcerts(data)
-      setIsLoading(false)
-    })
-    .catch(() => {})
+  useEffect(() => {
+    (async function () {
+      await api.get('concerts').then(({ data }) => {
+        setConcerts(data)
+        setIsLoading(false)
+      })
+        .catch(() => { })
+    })()
   }, [])
 
   return (
@@ -118,24 +120,24 @@ export default function SchedulePage() {
         className={classes.content}
         onChangeIndex={(index) => handleChangeTab(undefined, index)}>
 
-          {['past', 'today', 'future'].map((tabId, index) => (
-            <TabPanel value={tab} index={index} key={tabId}>
-              {concerts.filter(item => item.moment === tabId).map(item => (
-                <Card variant="outlined" key={item.id} className={classes.card}>
-                  <CardActionArea>
-                    <CardContent>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {format(new Date(item.date), "'Culto de 'eee' ('dd'/'MM')'", {
-                          locale: ptBR
-                        })}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary" component="p">
-                        {item.praises.map((praise, index) => (
-                          <div key={index}>{praise.name}</div>
-                        ))}
-                      </Typography>
-                      
-                      {/* {item.confirmedPresence.map(member => (
+        {['past', 'today', 'future'].map((tabId, index) => (
+          <TabPanel value={tab} index={index} key={tabId}>
+            {concerts.filter(item => item.moment === tabId).map(item => (
+              <Card variant="outlined" key={item.id} className={classes.card}>
+                <CardActionArea>
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="h2">
+                      {format(new Date(item.date), "'Culto de 'eee' ('dd'/'MM')'", {
+                        locale: ptBR
+                      })}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" component="p">
+                      {item.praises.map((praise, index) => (
+                        <div key={index}>{praise.name}</div>
+                      ))}
+                    </Typography>
+
+                    {/* {item.confirmedPresence.map(member => (
                         <Chip
                           avatar={
                             <Avatar>
@@ -149,31 +151,31 @@ export default function SchedulePage() {
                           deleteIcon={<DoneIcon />}
                         />
                       ))} */}
-                    </CardContent>
-                  </CardActionArea>
-                  <CardActions>
-                    <Button size="small" color="primary">
-                      Confirmar presença
-                    </Button>
-                    <Button size="small" color="primary">
-                      Learn More
-                    </Button>
-                  </CardActions>
-                </Card>
-              ))}
+                  </CardContent>
+                </CardActionArea>
+                <CardActions>
+                  <Button size="small" color="primary">
+                    Confirmar presença
+                  </Button>
+                  <Button size="small" color="primary">
+                    Learn More
+                  </Button>
+                </CardActions>
+              </Card>
+            ))}
 
-              {concerts.filter(item => item.moment === tabId).length === 0 && !isLoading && (
-                <Typography>
-                  { [
-                    "Os cultos passados ficarão aqui",
-                    "Nada programado pra hoje",
-                    "Nenhum agendamento encontrado"
-                  ][index] }
-                </Typography>
-              )}
+            {concerts.filter(item => item.moment === tabId).length === 0 && !isLoading && (
+              <Typography>
+                {[
+                  "Os cultos passados ficarão aqui",
+                  "Nada programado pra hoje",
+                  "Nenhum agendamento encontrado"
+                ][index]}
+              </Typography>
+            )}
 
-            </TabPanel>
-          ))}
+          </TabPanel>
+        ))}
 
       </SwipeableViews>
 
@@ -182,14 +184,14 @@ export default function SchedulePage() {
         aria-label="add"
         className={classes.fab}
         onClick={() => {
-          if(editWithDialog)
+          if (editWithDialog)
             handleDialogEditorInflate(undefined)
           else
             router.push('/schedule/new')
         }}>
         <AddIcon />
       </Fab>
-      
+
       <Backdrop variant="loading" open={isLoading}>
         <CircularProgress color={"primary"} />
       </Backdrop>
