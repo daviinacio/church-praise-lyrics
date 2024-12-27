@@ -139,7 +139,10 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
         vagalume_id: vagalume_result.artist.id
       },
       where: {
-        name: vagalume_result.artist.name || artist_name.trim()
+        name: vagalume_result.artist.name || artist_name.trim(),
+        ...vagalume_result.artist.id && {
+          vagalume_id: vagalume_result.artist.id
+        }
       }
     })
 
