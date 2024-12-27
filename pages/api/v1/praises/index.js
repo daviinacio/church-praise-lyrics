@@ -17,13 +17,13 @@ const handler = async (req, res) => {
     switch (req.method.trim().toUpperCase()) {
       case 'GET': return await index(req, res)
       case 'POST': return await store(req, res)
-  
+
       default:
         throw new RouteNotFoundError(req)
     };
   }
-  catch(err){
-    if(err instanceof HttpError)
+  catch (err) {
+    if (err instanceof HttpError)
       return res.status(err.status).json(err)
     else throw err
   }
@@ -54,7 +54,7 @@ export const index = Middleware(['auth:anonymous'], async (req, res) => {
   const { praiseId } = req.query
 
   if (praiseId) {
-    const praise = await prisma.praises.findFirst({
+    const praise = await prisma.praise.findFirst({
       where: { id: praiseId },
       include: {
         ...prismaInclude,
@@ -77,8 +77,8 @@ export const index = Middleware(['auth:anonymous'], async (req, res) => {
     } else throw new ContentNotFoundError('praise')
   }
   else {
-    const count = await prisma.praises.count()
-    const praises = await prisma.praises.findMany({
+    const count = await prisma.praise.count()
+    const praises = await prisma.praise.findMany({
       include: prismaInclude
     })
 
@@ -104,34 +104,37 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
     name: praise_name, tone, transpose, artist: artist_name, tags
   }).build()
 
-  if(validation.alright()){
+  if (validation.alright()) {
     const vagalume_result = await vagalume.get('search.php', {
       params: {
         art: artist_name.trim(),
-        mus: praise_name.trim()
+        mus: praise_name.trim(),
+        apikey: process.env.VAGALUME_API_KEY
       }
     })
-    .then(({ data }) => {
-      if((data.mus && data.art) || force === 'true') return {
-        artist: data.art || {},
-        music: (data.mus || [])[0] || {}
-      }
-      else
-      if(!data.art) throw new ValidationFailedError({
-        artist: 'Cantor não encontrado, por favor verifique e tente novamente'
+      .then(({ data }) => {
+        if ((data.mus && data.art) || force === 'true') return {
+          artist: data.art || {
+            name: artist_name.trim()
+          },
+          music: (data.mus || [])[0] || {
+            name: praise_name.trim()
+          }
+        }
+        else if (!data.mus) throw new ContentNotFoundError(
+          `Não foi possível encontrar a letra desse louvor no site vagalume. Verifique o nome informado, e tente novamente.`
+        )
+        else if (!data.art) throw new ValidationFailedError({
+          artist: 'Cantor não encontrado, por favor verifique e tente novamente'
+        })
       })
-      else
-      if(!data.mus) throw new ContentNotFoundError(
-        `Não foi possivel encontrar a letra desse louvor no site vagalume. Verifique o nome informado, e tente novamente.`
-      )
-    })
 
-    const artist = await prisma.artists.upsert({
+    const artist = await prisma.artist.upsert({
       create: {
         name: vagalume_result.artist.name || artist_name.trim(),
         vagalume_id: vagalume_result.artist.id
       },
-      update: { 
+      update: {
         name: vagalume_result.artist.name || artist_name.trim(),
         vagalume_id: vagalume_result.artist.id
       },
@@ -140,7 +143,7 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
       }
     })
 
-    const praise = await prisma.praises.create({
+    const praise = await prisma.praise.create({
       data: {
         name: vagalume_result.music.name || praise_name.trim(),
         vagalume_id: vagalume_result.music.id,
@@ -182,15 +185,15 @@ export const store = Middleware(['auth:anonymous'], async (req, res, user) => {
         }
       }
     })
-    .catch(err => {
-      if(err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0){
-        const field = err.meta.target.split("_")[0]
-        throw new ValidationFailedError(Object.fromEntries([[
-          field !== 'vagalume' ? field : 'name',
-          "Esse louvor já foi adicionado"
-        ]]))
-      } else throw err
-    })
+      .catch(err => {
+        if (err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0) {
+          const field = err.meta.target.split("_")[0]
+          throw new ValidationFailedError(Object.fromEntries([[
+            field !== 'vagalume' ? field : 'name',
+            "Esse louvor já foi adicionado"
+          ]]))
+        } else throw err
+      })
 
     praise.artist = praise.artist.name
     praise.tags = praise.tags.map(tag => (tag.label))
@@ -211,29 +214,29 @@ export const update = Middleware(['auth'], async (req, res) => {
     name: praise_name, tone, transpose, artist: artist_name, tags, status
   }).build()
 
-  if(validation.alright()){
+  if (validation.alright()) {
     tags.map(async (tag) => {
-      await prisma.tags.upsert({
+      await prisma.tag.upsert({
         create: { label: tag.trim() },
         update: { label: tag.trim() },
         where: { label: tag.trim() }
       })
     })
-  
-    const target = await prisma.praises.count({
+
+    const target = await prisma.praise.count({
       where: { id: praiseId }
     })
-  
-    if(!target)
+
+    if (!target)
       throw new ContentNotFoundError('praise')
-  
-    const praise = await prisma.praises.update({
+
+    const praise = await prisma.praise.update({
       where: {
         id: praiseId
       },
       data: {
         name: praise_name,
-        tone: tone, 
+        tone: tone,
         transpose: transpose,
         status: status,
         ...artist_name && {
@@ -251,25 +254,25 @@ export const update = Middleware(['auth'], async (req, res) => {
       },
       include: prismaInclude
     })
-    .catch((err) => {
-      if(err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0){
-        const field = err.meta.target.split("_")[0]
-        throw new ValidationFailedError(Object.fromEntries([[
-          field !== 'vagalume' ? field : 'name',
-          "Esse louvor já foi adicionado"
-        ]]))
-      }
-      else
-      if(err.code === 'P2025'){
-        throw new ContentNotFoundError('praise')
-      } else throw err
-    })
-  
+      .catch((err) => {
+        if (err.code === 'P2002' && err.meta.target.indexOf('unique') >= 0) {
+          const field = err.meta.target.split("_")[0]
+          throw new ValidationFailedError(Object.fromEntries([[
+            field !== 'vagalume' ? field : 'name',
+            "Esse louvor já foi adicionado"
+          ]]))
+        }
+        else
+          if (err.code === 'P2025') {
+            throw new ContentNotFoundError('praise')
+          } else throw err
+      })
+
     praise.artist = praise.artist.name
     praise.tags = praise.tags.map(tag => (tag.label))
 
     // Remove not uses tags
-    await prisma.tags.deleteMany({
+    await prisma.tag.deleteMany({
       where: { praises: { none: {} } }
     })
 
@@ -284,15 +287,15 @@ export const update = Middleware(['auth'], async (req, res) => {
 export const destroy = Middleware(['auth'], async (req, res) => {
   const { praiseId } = req.query
 
-  const praise = await prisma.praises.delete({
+  const praise = await prisma.praise.delete({
     where: {
       id: praiseId
     }
   })
-  .catch((err) => {
-    if(err.code === 'P2025')
-      throw new ContentNotFoundError('praise')
-  })
+    .catch((err) => {
+      if (err.code === 'P2025')
+        throw new ContentNotFoundError('praise')
+    })
 
   return res.status(200).json({
     status: 200,

@@ -5,13 +5,13 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Development
-  if((process.env.NODE_ENV || 'development') === 'development'){
+  if ((process.env.NODE_ENV || 'development') === 'development') {
     const password = hashSync('12345678', process.env.HASH_SALT || 10);
 
     // Users
     const users = {}
 
-    users.daviinacio = await prisma.users.upsert({
+    users.daviinacio = await prisma.user.upsert({
       where: { email: "daviinacio@daviinacio.com" },
       update: {},
       create: {

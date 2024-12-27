@@ -12,15 +12,15 @@ const prisma = new PrismaClient()
 
 const handler = async (req, res) => {
   try {
-    switch(req.method.trim().toUpperCase()){
+    switch (req.method.trim().toUpperCase()) {
       case 'POST': return await login(req, res)
-  
+
       default:
         return RouteNotFoundError(req)
     };
   }
-  catch(err){
-    if(err instanceof HttpError)
+  catch (err) {
+    if (err instanceof HttpError)
       return res.status(err.status).json(err)
     else throw err
   }
@@ -30,12 +30,12 @@ export const login = async (req, res) => {
   const { email, password } = req.body
   const { keep } = req.query
 
-  const user = await prisma.users.findFirst({
-    where: { OR: [ { email }, { username: email } ] }
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email }, { username: email }] }
   })
 
-  if(user){
-    if(compareSync(password, user.password)){
+  if (user) {
+    if (compareSync(password, user.password)) {
       const token = await createSession(user, keep === 'true')
       return res.status(200).json({
         status: 200,
