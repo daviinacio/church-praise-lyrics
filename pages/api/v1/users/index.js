@@ -6,16 +6,16 @@ const prisma = new PrismaClient();
 
 const handler = async (req, res) => {
   try {
-    switch(req.method.trim().toUpperCase()){
+    switch (req.method.trim().toUpperCase()) {
       case 'GET': return await index(req, res);
       case 'POST': return await store(req, res);
-  
+
       default:
         throw new RouteNotFoundError(req)
     };
   }
-  catch(err){
-    if(err instanceof HttpError)
+  catch (err) {
+    if (err instanceof HttpError)
       return res.status(err.status).json(err)
     else throw err
   }
@@ -24,19 +24,19 @@ const handler = async (req, res) => {
 export const index = Middleware(['auth'], async (req, res) => {
   const { userId } = req.query;
 
-  if(userId){
-    const user = await prisma.users.findFirst({
+  if (userId) {
+    const user = await prisma.user.findFirst({
       where: { id: userId }
     })
 
-    if(user) return res.status(200).json({
+    if (user) return res.status(200).json({
       status: 200,
       result: user
     })
     else throw ContentNotFoundError('user')
   }
   else {
-    const users = await prisma.users.findMany({})
+    const users = await prisma.user.findMany({})
 
     return res.status(200).json({
       status: 200,

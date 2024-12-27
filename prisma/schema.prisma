@@ -1,17 +1,14 @@
 datasource db {
-  provider          = "mysql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-  relationMode      = "prisma"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
-  // previewFeatures = ["referentialIntegrity"]
 }
 
-model Users {
-  id         String   @id @default(uuid()) @map("_id")
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   username   String   @unique
   email      String   @unique
@@ -22,91 +19,98 @@ model Users {
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
-  roles    Roles[]
-  sessions Sessions[] @relation("user_sessions")
-  praises  Praises[]  @relation("user_praises")
+  role_ids String[] @db.ObjectId
+  roles    Role[]   @relation("user_role", fields: [role_ids], references: [id])
 
-  @@map("users")
+  sessions Session[] @relation("user_sessions")
+  prises   Praise[]
+
+  @@map("user")
 }
 
-model Sessions {
-  id             Int       @id @default(autoincrement()) @map("_id")
-  token          String    @db.VarChar(256)
+model Role {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  name      String  @unique
+  is_active Boolean @default(true)
+
+  user_ids String[] @db.ObjectId
+  users    User[]   @relation("user_role", fields: [user_ids], references: [id])
+
+  @@map("role")
+}
+
+model Session {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  token          String
   type           String    @default("bearer")
   expires_in     Int
   logged_at      DateTime  @default(now())
   inactivated_at DateTime?
   is_active      Boolean   @default(true)
 
-  user_id String
-  user    Users  @relation("user_sessions", fields: [user_id], references: [id])
+  user_id String @db.ObjectId
+  user    User   @relation("user_sessions", fields: [user_id], references: [id])
 
   @@index([user_id])
-  @@map("sessions")
+  @@map("session")
 }
 
-model Roles {
-  id        Int     @id @default(autoincrement()) @map("_id")
-  name      String  @unique
-  is_active Boolean @default(true)
-
-  users Users[]
-
-  @@map("roles")
-}
-
-model Artists {
-  id          String   @id @default(uuid()) @map("_id")
+model Artist {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
-  vagalume_id String?  @unique
+  vagalume_id String?
   created_at  DateTime @default(now())
 
-  praises Praises[] @relation("artist_praises")
+  praises Praise[] @relation("artist_praise")
 
-  @@map("artists")
+  @@map("artist")
 }
 
-model Praises {
-  id          String       @id @default(uuid()) @map("_id")
+model Praise {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  vagalume_id String?      @unique()
+  vagalume_id String?
   tone        String       @default("?")
   status      PraiseStatus
   transpose   Int          @default(0)
   created_at  DateTime     @default(now())
   updated_at  DateTime     @default(now())
 
-  artist_id String
-  artist    Artists @relation("artist_praises", fields: [artist_id], references: [id])
+  suggested_by_id String? @db.ObjectId
+  suggested_by    User?   @relation(fields: [suggested_by_id], references: [id])
 
-  suggested_by_id String?
-  suggested_by    Users?  @relation("user_praises", fields: [suggested_by_id], references: [id])
+  artist_id String @db.ObjectId
+  artist    Artist @relation("artist_praise", fields: [artist_id], references: [id])
 
-  lyrics Lyrics? @relation("praises_lyrics")
-  tags   Tags[]  @relation("praises_tags")
+  lyrics_id String? @db.ObjectId
+  lyrics    Lyrics? @relation("praises_lyrics")
+
+  tags_ids String[] @db.ObjectId
+  tags     Tag[]    @relation("praises_tags", fields: [tags_ids], references: [id])
 
   @@unique([name, artist_id], name: "praises_name_unique")
   @@index([artist_id])
   @@index([suggested_by_id])
-  @@map("praises")
+  @@map("praise")
 }
 
 model Lyrics {
-  id      String @id @default(uuid()) @map("_id")
-  content String @db.LongText()
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  content String
 
-  praise_id String?  @unique
-  praise    Praises? @relation("praises_lyrics", fields: [praise_id], references: [id])
+  praise_id String? @unique @db.ObjectId
+  praise    Praise? @relation("praises_lyrics", fields: [praise_id], references: [id])
 
   @@map("lyrics")
 }
 
-model Tags {
-  id      Int       @id @default(autoincrement()) @map("_id")
-  label   String    @unique
-  praises Praises[] @relation("praises_tags")
+model Tag {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  label     String   @unique
+  prise_ids String[] @db.ObjectId
+  praises   Praise[] @relation("praises_tags", fields: [prise_ids], references: [id])
 
-  @@map("tags")
+  @@map("tag")
 }
 
 enum PraiseStatus {
