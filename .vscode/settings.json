@@ -11,14 +11,6 @@
     "vagalume",
     "maxage"
   ],
-  "cSpell.customDictionaries": {
-    "custom-dictionary-workspace": {
-      "name": "custom-dictionary-workspace",
-      "path": "${workspaceFolder:adfg-louvor}/.cspell/custom-dictionary-workspace.txt",
-      "addWords": true,
-      "scope": "workspace"
-    }
-  },
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
